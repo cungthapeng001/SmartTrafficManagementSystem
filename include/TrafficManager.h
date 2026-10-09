@@ -6,10 +6,8 @@ class TrafficManager {
 private:
     Road northRoad;
     Road southRoad;
-    int vehicleCounter;
     int emergencyCounter; // To keep track of insertion order for emergency vehicles
 
-    int getNextVehicleId();
     int getNextEmergencyInsertionOrder();
     void clearInputBuffer();
 

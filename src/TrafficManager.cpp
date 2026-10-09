@@ -5,13 +5,9 @@
 
 using namespace std;
 
-TrafficManager::TrafficManager() : vehicleCounter(100), emergencyCounter(0) {
+TrafficManager::TrafficManager() : emergencyCounter(0) {
     northRoad = Road("North", 15, 45); // Initial mock data from phase 1
     southRoad = Road("South", 5, 20);
-}
-
-int TrafficManager::getNextVehicleId() {
-    return ++vehicleCounter;
 }
 
 int TrafficManager::getNextEmergencyInsertionOrder() {
@@ -78,8 +74,16 @@ void TrafficManager::addNormalVehicleMenu() {
     cout << "\n[Add Normal Vehicle]\n";
     Road* road = selectRoad();
     
+    int id;
     string type;
     int waitTime;
+    cout << "Enter vehicle ID: ";
+    cin >> id;
+    if (cin.fail()) {
+        clearInputBuffer();
+        cout << "Invalid vehicle ID.\n";
+        return;
+    }
     cout << "Enter vehicle type (e.g., Car, Bus): ";
     cin >> type;
     cout << "Enter waiting time (seconds): ";
@@ -91,7 +95,7 @@ void TrafficManager::addNormalVehicleMenu() {
         return;
     }
 
-    Vehicle v(getNextVehicleId(), type, waitTime, false, 0, 0);
+    Vehicle v(id, type, waitTime, false, 0, 0);
     road->addNormalVehicle(v);
 }
 
@@ -115,6 +119,15 @@ void TrafficManager::addEmergencyVehicleMenu() {
     else if (typeChoice == 2) { type = "Fire Truck"; priority = 2; }
     else { type = "Police Vehicle"; priority = 3; }
 
+    int id;
+    cout << "Enter vehicle ID: ";
+    cin >> id;
+    if (cin.fail()) {
+        clearInputBuffer();
+        cout << "Invalid vehicle ID.\n";
+        return;
+    }
+
     int waitTime;
     cout << "Enter waiting time (seconds): ";
     cin >> waitTime;
@@ -124,7 +137,7 @@ void TrafficManager::addEmergencyVehicleMenu() {
         return;
     }
 
-    Vehicle v(getNextVehicleId(), type, waitTime, true, priority, getNextEmergencyInsertionOrder());
+    Vehicle v(id, type, waitTime, true, priority, getNextEmergencyInsertionOrder());
     road->addEmergencyVehicle(v);
 }
 
