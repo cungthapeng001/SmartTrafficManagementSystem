@@ -72,7 +72,6 @@ void TrafficManager::runMenu() {
 
 void TrafficManager::addNormalVehicleMenu() {
     cout << "\n[Add Normal Vehicle]\n";
-    Road* road = selectRoad();
     
     int id;
     string type;
@@ -86,6 +85,9 @@ void TrafficManager::addNormalVehicleMenu() {
     }
     cout << "Enter vehicle type (e.g., Car, Bus): ";
     cin >> type;
+    
+    Road* road = selectRoad();
+
     cout << "Enter waiting time (seconds): ";
     cin >> waitTime;
     
@@ -101,8 +103,16 @@ void TrafficManager::addNormalVehicleMenu() {
 
 void TrafficManager::addEmergencyVehicleMenu() {
     cout << "\n[Add Emergency Vehicle]\n";
-    Road* road = selectRoad();
     
+    int id;
+    cout << "Enter vehicle ID: ";
+    cin >> id;
+    if (cin.fail()) {
+        clearInputBuffer();
+        cout << "Invalid vehicle ID.\n";
+        return;
+    }
+
     int typeChoice;
     cout << "Select Emergency Type:\n1. Ambulance (Priority 1)\n2. Fire Truck (Priority 2)\n3. Police Vehicle (Priority 3)\nChoice: ";
     cin >> typeChoice;
@@ -119,14 +129,7 @@ void TrafficManager::addEmergencyVehicleMenu() {
     else if (typeChoice == 2) { type = "Fire Truck"; priority = 2; }
     else { type = "Police Vehicle"; priority = 3; }
 
-    int id;
-    cout << "Enter vehicle ID: ";
-    cin >> id;
-    if (cin.fail()) {
-        clearInputBuffer();
-        cout << "Invalid vehicle ID.\n";
-        return;
-    }
+    Road* road = selectRoad();
 
     int waitTime;
     cout << "Enter waiting time (seconds): ";
