@@ -73,7 +73,7 @@ void TrafficManager::runMenu() {
 void TrafficManager::addNormalVehicleMenu() {
     cout << "\n[Add Normal Vehicle]\n";
     
-    int id;
+    string id;
     string type;
     int waitTime;
     cout << "Enter vehicle ID: ";
@@ -104,7 +104,7 @@ void TrafficManager::addNormalVehicleMenu() {
 void TrafficManager::addEmergencyVehicleMenu() {
     cout << "\n[Add Emergency Vehicle]\n";
     
-    int id;
+    string id;
     cout << "Enter vehicle ID: ";
     cin >> id;
     if (cin.fail()) {

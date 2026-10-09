@@ -1,8 +1,8 @@
 #include "Vehicle.h"
 
-Vehicle::Vehicle() : id(0), type(""), waitTime(0), isEmergency(false), emergencyPriority(0), insertionOrder(0) {}
+Vehicle::Vehicle() : id(""), type(""), waitTime(0), isEmergency(false), emergencyPriority(0), insertionOrder(0) {}
 
-Vehicle::Vehicle(int id, std::string type, int waitTime, bool isEmergency, int emergencyPriority, int insertionOrder)
+Vehicle::Vehicle(std::string id, std::string type, int waitTime, bool isEmergency, int emergencyPriority, int insertionOrder)
     : id(id), type(type), waitTime(waitTime), isEmergency(isEmergency), emergencyPriority(emergencyPriority), insertionOrder(insertionOrder) {}
 
 bool Vehicle::operator<(const Vehicle& other) const {
