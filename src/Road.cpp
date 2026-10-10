@@ -11,13 +11,10 @@ Road::Road(string dir, int initVehicleCount, int initWaitTime)
 
 void Road::addNormalVehicle(const Vehicle& v) {
     normalQueue.push(v);
-    cout << "Added Normal Vehicle (ID: " << v.id << ", Type: " << v.type << ") to " << direction << " Road.\n";
 }
 
 void Road::addEmergencyVehicle(const Vehicle& v) {
     emergencyQueue.push(v);
-    cout << "Added Emergency Vehicle (ID: " << v.id << ", Type: " << v.type 
-         << ", Priority: " << v.emergencyPriority << ") to " << direction << " Road.\n";
 }
 
 bool Road::processNormalVehicle(Vehicle& v) {

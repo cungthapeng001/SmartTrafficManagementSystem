@@ -19,16 +19,137 @@ void TrafficManager::clearInputBuffer() {
     cin.ignore(numeric_limits<streamsize>::max(), '\n');
 }
 
-Road* TrafficManager::selectRoad() {
+Road* TrafficManager::selectRoadConsole() {
     int choice;
-    cout << "Select Road:\n1. North Road\n2. South Road\nChoice: ";
-    cin >> choice;
-    if (cin.fail() || (choice != 1 && choice != 2)) {
-        clearInputBuffer();
-        cout << "Invalid choice. Defaulting to North Road.\n";
-        return &northRoad;
+    while (true) {
+        cout << "Select Road:\n1. North Road\n2. South Road\nChoice: ";
+        cin >> choice;
+        if (cin.fail() || (choice != 1 && choice != 2)) {
+            clearInputBuffer();
+            cout << "Invalid choice. Please select 1 or 2.\n";
+        } else {
+            return (choice == 1) ? &northRoad : &southRoad;
+        }
     }
-    return (choice == 1) ? &northRoad : &southRoad;
+}
+
+Road* TrafficManager::getRoad(const std::string& roadId) {
+    if (roadId == "NORTH") return &northRoad;
+    if (roadId == "SOUTH") return &southRoad;
+    return nullptr;
+}
+
+bool TrafficManager::isVehicleIDExists(const std::string& id) const {
+    return activeVehicleIDs.find(id) != activeVehicleIDs.end();
+}
+
+bool TrafficManager::addNormalVehicle(const std::string& roadId, const std::string& vehicleId, const std::string& type, int waitTime, std::string& errorMessage) {
+    if (vehicleId.empty()) {
+        errorMessage = "Vehicle ID cannot be empty.";
+        return false;
+    }
+    if (isVehicleIDExists(vehicleId)) {
+        errorMessage = "Vehicle ID already exists.";
+        return false;
+    }
+    if (type.empty()) {
+        errorMessage = "Vehicle type cannot be empty.";
+        return false;
+    }
+    if (waitTime < 0) {
+        errorMessage = "Waiting time cannot be negative.";
+        return false;
+    }
+    Road* road = getRoad(roadId);
+    if (!road) {
+        errorMessage = "Invalid road ID.";
+        return false;
+    }
+
+    Vehicle v(vehicleId, type, waitTime, false, 0, 0);
+    road->addNormalVehicle(v);
+    activeVehicleIDs.insert(vehicleId);
+    return true;
+}
+
+bool TrafficManager::addEmergencyVehicle(const std::string& roadId, const std::string& vehicleId, const std::string& type, int waitTime, int priority, std::string& errorMessage) {
+    if (vehicleId.empty()) {
+        errorMessage = "Vehicle ID cannot be empty.";
+        return false;
+    }
+    if (isVehicleIDExists(vehicleId)) {
+        errorMessage = "Vehicle ID already exists.";
+        return false;
+    }
+    if (type.empty()) {
+        errorMessage = "Vehicle type cannot be empty.";
+        return false;
+    }
+    if (waitTime < 0) {
+        errorMessage = "Waiting time cannot be negative.";
+        return false;
+    }
+    if (priority < 1 || priority > 3) {
+        errorMessage = "Invalid priority. Must be 1, 2, or 3.";
+        return false;
+    }
+    Road* road = getRoad(roadId);
+    if (!road) {
+        errorMessage = "Invalid road ID.";
+        return false;
+    }
+
+    Vehicle v(vehicleId, type, waitTime, true, priority, getNextEmergencyInsertionOrder());
+    road->addEmergencyVehicle(v);
+    activeVehicleIDs.insert(vehicleId);
+    return true;
+}
+
+bool TrafficManager::processNormalVehicle(const std::string& roadId, Vehicle& processedVehicle, std::string& errorMessage) {
+    Road* road = getRoad(roadId);
+    if (!road) {
+        errorMessage = "Invalid road ID.";
+        return false;
+    }
+    if (road->processNormalVehicle(processedVehicle)) {
+        activeVehicleIDs.erase(processedVehicle.id);
+        return true;
+    }
+    errorMessage = "No normal vehicles waiting on this road.";
+    return false;
+}
+
+bool TrafficManager::processEmergencyVehicle(const std::string& roadId, Vehicle& processedVehicle, std::string& errorMessage) {
+    Road* road = getRoad(roadId);
+    if (!road) {
+        errorMessage = "Invalid road ID.";
+        return false;
+    }
+    if (road->processEmergencyVehicle(processedVehicle)) {
+        activeVehicleIDs.erase(processedVehicle.id);
+        return true;
+    }
+    errorMessage = "No emergency vehicles waiting on this road.";
+    return false;
+}
+
+bool TrafficManager::updateSensorInfo(const std::string& roadId, int count, int waitTime, std::string& errorMessage) {
+    if (count < 0) {
+        errorMessage = "Vehicle count cannot be negative.";
+        return false;
+    }
+    if (waitTime < 0) {
+        errorMessage = "Waiting time cannot be negative.";
+        return false;
+    }
+    Road* road = getRoad(roadId);
+    if (!road) {
+        errorMessage = "Invalid road ID.";
+        return false;
+    }
+    road->sensorVehicleCount = count;
+    road->maxWaitingTime = waitTime;
+    return true;
 }
 
 void TrafficManager::runMenu() {
@@ -85,20 +206,29 @@ void TrafficManager::addNormalVehicleMenu() {
     }
     cout << "Enter vehicle type (e.g., Car, Bus): ";
     cin >> type;
+    if (cin.fail()) {
+        clearInputBuffer();
+        cout << "Invalid vehicle type.\n";
+        return;
+    }
     
-    Road* road = selectRoad();
+    Road* road = selectRoadConsole();
 
     cout << "Enter waiting time (seconds): ";
     cin >> waitTime;
-    
-    if (cin.fail() || waitTime < 0) {
+    if (cin.fail()) {
         clearInputBuffer();
-        cout << "Invalid wait time. Must be a positive integer.\n";
+        cout << "Invalid wait time.\n";
         return;
     }
 
-    Vehicle v(id, type, waitTime, false, 0, 0);
-    road->addNormalVehicle(v);
+    string roadId = (road == &northRoad) ? "NORTH" : "SOUTH";
+    string errorMsg;
+    if (addNormalVehicle(roadId, id, type, waitTime, errorMsg)) {
+        cout << "Added Normal Vehicle (ID: " << id << ", Type: " << type << ") to " << road->direction << " Road.\n";
+    } else {
+        cout << "Error: " << errorMsg << "\n";
+    }
 }
 
 void TrafficManager::addEmergencyVehicleMenu() {
@@ -129,41 +259,51 @@ void TrafficManager::addEmergencyVehicleMenu() {
     else if (typeChoice == 2) { type = "Fire Truck"; priority = 2; }
     else { type = "Police Vehicle"; priority = 3; }
 
-    Road* road = selectRoad();
+    Road* road = selectRoadConsole();
 
     int waitTime;
     cout << "Enter waiting time (seconds): ";
     cin >> waitTime;
-    if (cin.fail() || waitTime < 0) {
+    if (cin.fail()) {
         clearInputBuffer();
-        cout << "Invalid wait time. Must be a positive integer.\n";
+        cout << "Invalid wait time.\n";
         return;
     }
 
-    Vehicle v(id, type, waitTime, true, priority, getNextEmergencyInsertionOrder());
-    road->addEmergencyVehicle(v);
+    string roadId = (road == &northRoad) ? "NORTH" : "SOUTH";
+    string errorMsg;
+    if (addEmergencyVehicle(roadId, id, type, waitTime, priority, errorMsg)) {
+        cout << "Added Emergency Vehicle (ID: " << id << ", Type: " << type 
+             << ", Priority: " << priority << ") to " << road->direction << " Road.\n";
+    } else {
+        cout << "Error: " << errorMsg << "\n";
+    }
 }
 
 void TrafficManager::processNormalVehicleMenu() {
     cout << "\n[Process Normal Vehicle]\n";
-    Road* road = selectRoad();
+    Road* road = selectRoadConsole();
     Vehicle processedVehicle;
-    if (road->processNormalVehicle(processedVehicle)) {
+    string roadId = (road == &northRoad) ? "NORTH" : "SOUTH";
+    string errorMsg;
+    if (processNormalVehicle(roadId, processedVehicle, errorMsg)) {
         cout << "Processed Normal Vehicle -> ID: " << processedVehicle.id << ", Type: " << processedVehicle.type << "\n";
     } else {
-        cout << "No normal vehicles waiting on " << road->direction << " Road.\n";
+        cout << errorMsg << "\n";
     }
 }
 
 void TrafficManager::processEmergencyVehicleMenu() {
     cout << "\n[Process Emergency Vehicle]\n";
-    Road* road = selectRoad();
+    Road* road = selectRoadConsole();
     Vehicle processedVehicle;
-    if (road->processEmergencyVehicle(processedVehicle)) {
+    string roadId = (road == &northRoad) ? "NORTH" : "SOUTH";
+    string errorMsg;
+    if (processEmergencyVehicle(roadId, processedVehicle, errorMsg)) {
         cout << "Processed Emergency Vehicle -> ID: " << processedVehicle.id 
              << ", Type: " << processedVehicle.type << ", Priority: " << processedVehicle.emergencyPriority << "\n";
     } else {
-        cout << "No emergency vehicles waiting on " << road->direction << " Road.\n";
+        cout << errorMsg << "\n";
     }
 }
 
@@ -183,28 +323,32 @@ void TrafficManager::displayEmergencyQueuesMenu() {
 
 void TrafficManager::updateSensorInfoMenu() {
     cout << "\n[Update Sensor Information]\n";
-    Road* road = selectRoad();
+    Road* road = selectRoadConsole();
     
     int count, time;
     cout << "Enter simulated vehicle count (>= 0): ";
     cin >> count;
-    if (cin.fail() || count < 0) {
+    if (cin.fail()) {
         clearInputBuffer();
-        cout << "Invalid count.\n";
+        cout << "Invalid input.\n";
         return;
     }
     
     cout << "Enter max waiting time (>= 0): ";
     cin >> time;
-    if (cin.fail() || time < 0) {
+    if (cin.fail()) {
         clearInputBuffer();
-        cout << "Invalid time.\n";
+        cout << "Invalid input.\n";
         return;
     }
     
-    road->sensorVehicleCount = count;
-    road->maxWaitingTime = time;
-    cout << "Sensor information updated for " << road->direction << " Road.\n";
+    string roadId = (road == &northRoad) ? "NORTH" : "SOUTH";
+    string errorMsg;
+    if (updateSensorInfo(roadId, count, time, errorMsg)) {
+        cout << "Sensor information updated for " << road->direction << " Road.\n";
+    } else {
+        cout << "Error: " << errorMsg << "\n";
+    }
 }
 
 void TrafficManager::displayTrafficInfoMenu() {

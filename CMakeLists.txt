@@ -11,4 +11,5 @@ add_executable(SmartTrafficManagementSystem
     src/Vehicle.cpp
     src/Road.cpp
     src/TrafficManager.cpp
+    src/BackendProtocol.cpp
 )
