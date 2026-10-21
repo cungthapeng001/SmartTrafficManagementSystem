@@ -42,8 +42,6 @@ void Road::displayNormalQueue() const {
         return;
     }
     
-    // We cannot iterate a std::queue directly without modifying it.
-    // We create a copy to display its contents safely.
     queue<Vehicle> tempQueue = normalQueue;
     cout << "Total waiting: " << tempQueue.size() << "\n";
     int pos = 1;
@@ -62,7 +60,6 @@ void Road::displayEmergencyQueue() const {
         return;
     }
     
-    // Create a copy to display its contents safely.
     priority_queue<Vehicle> tempQueue = emergencyQueue;
     cout << "Total waiting: " << tempQueue.size() << "\n";
     int pos = 1;

@@ -3,23 +3,21 @@
 #include <unordered_set>
 #include <string>
 
-// Class representing the Traffic Manager system
 class TrafficManager {
 private:
     Road northRoad;
     Road southRoad;
-    int emergencyCounter; // To keep track of insertion order for emergency vehicles
+    int emergencyCounter;
     std::unordered_set<std::string> activeVehicleIDs;
 
     int getNextEmergencyInsertionOrder();
     void clearInputBuffer();
 
-    Road* selectRoadConsole(); // Renamed from selectRoad
+    Road* selectRoadConsole();
 
 public:
     TrafficManager();
 
-    // Core Backend Operations
     bool addNormalVehicle(const std::string& roadId, const std::string& vehicleId, const std::string& type, int waitTime, std::string& errorMessage);
     bool addEmergencyVehicle(const std::string& roadId, const std::string& vehicleId, const std::string& type, int waitTime, int priority, std::string& errorMessage);
     bool processNormalVehicle(const std::string& roadId, Vehicle& processedVehicle, std::string& errorMessage);
@@ -32,7 +30,6 @@ public:
     const Road& getNorthRoad() const { return northRoad; }
     const Road& getSouthRoad() const { return southRoad; }
 
-    // Console Menu Operations
     void runMenu();
     void addNormalVehicleMenu();
     void addEmergencyVehicleMenu();

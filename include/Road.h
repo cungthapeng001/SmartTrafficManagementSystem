@@ -3,18 +3,14 @@
 #include <queue>
 #include "Vehicle.h"
 
-// Class representing a road at the intersection
 class Road {
 public:
-    std::string direction; // "North" or "South"
+    std::string direction;
     
-    // FIFO queue for normal vehicles
     std::queue<Vehicle> normalQueue;
     
-    // Priority queue for emergency vehicles
     std::priority_queue<Vehicle> emergencyQueue;
     
-    // Simulated sensor inputs
     int sensorVehicleCount;
     int maxWaitingTime;
 

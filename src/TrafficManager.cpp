@@ -6,7 +6,7 @@
 using namespace std;
 
 TrafficManager::TrafficManager() : emergencyCounter(0) {
-    northRoad = Road("North", 15, 45); // Initial mock data from phase 1
+    northRoad = Road("North", 15, 45);
     southRoad = Road("South", 5, 20);
 }
 
