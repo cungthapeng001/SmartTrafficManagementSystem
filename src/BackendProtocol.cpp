@@ -241,7 +241,7 @@ void BackendProtocol::handleUpdateSensorInfo(const json& req, json& res) {
     }
 }
 
-void BackendProtocol::handleGetRoads(const json& req, json& res) {
+void BackendProtocol::handleGetRoads(const json& /*req*/, json& res) {
     const auto& roads = tm.getAllRoads();
     json list = json::array();
     for (const auto& r : roads) {
@@ -283,7 +283,7 @@ void BackendProtocol::handleAddRoad(const json& req, json& res) {
 // ---------------------------------------------------------
 // Graph & Dijkstra Handlers
 // ---------------------------------------------------------
-void BackendProtocol::handleGetJunctions(const json& req, json& res) {
+void BackendProtocol::handleGetJunctions(const json& /*req*/, json& res) {
     vector<string> names = graph.getJunctionNames();
     json list = json::array();
     for (const auto& name : names) {
@@ -299,7 +299,7 @@ void BackendProtocol::handleGetJunctions(const json& req, json& res) {
     };
 }
 
-void BackendProtocol::handleGetGraphConnections(const json& req, json& res) {
+void BackendProtocol::handleGetGraphConnections(const json& /*req*/, json& res) {
     auto conns = graph.getRoadConnections();
     json list = json::array();
     for (const auto& c : conns) {
@@ -391,7 +391,7 @@ void BackendProtocol::handleConnectRoad(const json& req, json& res) {
     res["data"] = {{"from", from}, {"to", to}, {"weight", weight}};
 }
 
-void BackendProtocol::handlePing(const json& req, json& res) {
+void BackendProtocol::handlePing(const json& /*req*/, json& res) {
     res["success"] = true;
     res["message"] = "pong";
     res["data"] = nullptr;
