@@ -4,10 +4,13 @@
 
 using namespace std;
 
-Road::Road() : direction("Unknown"), sensorVehicleCount(0), maxWaitingTime(0) {}
+Road::Road() : roadId("UNKNOWN"), direction("Unknown"), sensorVehicleCount(0), maxWaitingTime(0) {}
 
 Road::Road(string dir, int initVehicleCount, int initWaitTime)
-    : direction(dir), sensorVehicleCount(initVehicleCount), maxWaitingTime(initWaitTime) {}
+    : roadId(dir), direction(dir), sensorVehicleCount(initVehicleCount), maxWaitingTime(initWaitTime) {}
+
+Road::Road(string id, string dir, int initVehicleCount, int initWaitTime)
+    : roadId(id), direction(dir), sensorVehicleCount(initVehicleCount), maxWaitingTime(initWaitTime) {}
 
 void Road::addNormalVehicle(const Vehicle& v) {
     normalQueue.push(v);
@@ -36,7 +39,7 @@ bool Road::processEmergencyVehicle(Vehicle& v) {
 }
 
 void Road::displayNormalQueue() const {
-    cout << "--- " << direction << " Road: Normal Vehicles ---\n";
+    cout << "--- " << direction << " (" << roadId << "): Normal Vehicles ---\n";
     if (normalQueue.empty()) {
         cout << "Queue is empty.\n";
         return;
@@ -54,7 +57,7 @@ void Road::displayNormalQueue() const {
 }
 
 void Road::displayEmergencyQueue() const {
-    cout << "--- " << direction << " Road: Emergency Vehicles ---\n";
+    cout << "--- " << direction << " (" << roadId << "): Emergency Vehicles ---\n";
     if (emergencyQueue.empty()) {
         cout << "Queue is empty.\n";
         return;
@@ -66,9 +69,9 @@ void Road::displayEmergencyQueue() const {
     while (!tempQueue.empty()) {
         Vehicle v = tempQueue.top();
         string prioStr;
-        if (v.emergencyPriority == 1) prioStr = "Ambulance";
-        else if (v.emergencyPriority == 2) prioStr = "Fire Truck";
-        else if (v.emergencyPriority == 3) prioStr = "Police";
+        if (v.emergencyPriority == 1) prioStr = "Ambulance (P1)";
+        else if (v.emergencyPriority == 2) prioStr = "Fire Truck (P2)";
+        else if (v.emergencyPriority == 3) prioStr = "Police (P3)";
         else prioStr = "Other";
 
         cout << pos << ". ID: " << v.id << ", Type: " << v.type << " (" << prioStr 
@@ -79,7 +82,7 @@ void Road::displayEmergencyQueue() const {
 }
 
 void Road::displayTrafficInfo() const {
-    cout << "[" << direction << " Road Info]\n";
+    cout << "[" << direction << " (" << roadId << ") Info]\n";
     cout << "Simulated Sensor Count: " << sensorVehicleCount << "\n";
     cout << "Simulated Max Wait Time: " << maxWaitingTime << "s\n";
     cout << "Normal Queue Size: " << normalQueue.size() << "\n";

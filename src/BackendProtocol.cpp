@@ -4,7 +4,10 @@
 using namespace std;
 using json = nlohmann::json;
 
-BackendProtocol::BackendProtocol() {}
+BackendProtocol::BackendProtocol() {
+    // Initialize seven default junctions (A through G) with bidirectional connections
+    graph.initSevenJunctionNetwork();
+}
 
 nlohmann::json BackendProtocol::vehicleToJson(const Vehicle& v) {
     json j;
@@ -50,6 +53,20 @@ void BackendProtocol::run() {
                 handleGetTrafficInfo(req, res);
             } else if (op == "update_sensor_info") {
                 handleUpdateSensorInfo(req, res);
+            } else if (op == "get_roads") {
+                handleGetRoads(req, res);
+            } else if (op == "add_road") {
+                handleAddRoad(req, res);
+            } else if (op == "get_junctions") {
+                handleGetJunctions(req, res);
+            } else if (op == "get_graph_connections") {
+                handleGetGraphConnections(req, res);
+            } else if (op == "find_shortest_path") {
+                handleFindShortestPath(req, res);
+            } else if (op == "add_junction") {
+                handleAddJunction(req, res);
+            } else if (op == "connect_junction_road") {
+                handleConnectRoad(req, res);
             } else if (op == "ping") {
                 handlePing(req, res);
             } else {
@@ -146,7 +163,7 @@ void BackendProtocol::handleGetNormalVehicles(const json& req, json& res) {
     Road* road = tm.getRoad(roadId);
     if (!road) {
         res["success"] = false;
-        res["message"] = "Invalid road ID.";
+        res["message"] = "Invalid road ID: " + roadId;
         res["data"] = nullptr;
         return;
     }
@@ -160,7 +177,7 @@ void BackendProtocol::handleGetNormalVehicles(const json& req, json& res) {
     
     res["success"] = true;
     res["message"] = "Normal queue retrieved successfully";
-    res["data"] = {{"vehicles", list}, {"count", list.size()}};
+    res["data"] = {{"vehicles", list}, {"count", list.size()}, {"road_id", road->roadId}, {"display_name", road->direction}};
 }
 
 void BackendProtocol::handleGetEmergencyVehicles(const json& req, json& res) {
@@ -168,7 +185,7 @@ void BackendProtocol::handleGetEmergencyVehicles(const json& req, json& res) {
     Road* road = tm.getRoad(roadId);
     if (!road) {
         res["success"] = false;
-        res["message"] = "Invalid road ID.";
+        res["message"] = "Invalid road ID: " + roadId;
         res["data"] = nullptr;
         return;
     }
@@ -182,7 +199,7 @@ void BackendProtocol::handleGetEmergencyVehicles(const json& req, json& res) {
     
     res["success"] = true;
     res["message"] = "Emergency queue retrieved successfully";
-    res["data"] = {{"vehicles", list}, {"count", list.size()}};
+    res["data"] = {{"vehicles", list}, {"count", list.size()}, {"road_id", road->roadId}, {"display_name", road->direction}};
 }
 
 void BackendProtocol::handleGetTrafficInfo(const json& req, json& res) {
@@ -190,7 +207,7 @@ void BackendProtocol::handleGetTrafficInfo(const json& req, json& res) {
     Road* road = tm.getRoad(roadId);
     if (!road) {
         res["success"] = false;
-        res["message"] = "Invalid road ID.";
+        res["message"] = "Invalid road ID: " + roadId;
         res["data"] = nullptr;
         return;
     }
@@ -198,7 +215,8 @@ void BackendProtocol::handleGetTrafficInfo(const json& req, json& res) {
     res["success"] = true;
     res["message"] = "Traffic info retrieved successfully";
     res["data"] = {
-        {"road_id", roadId},
+        {"road_id", road->roadId},
+        {"display_name", road->direction},
         {"sensor_vehicle_count", road->sensorVehicleCount},
         {"max_waiting_time", road->maxWaitingTime},
         {"normal_queue_size", road->normalQueue.size()},
@@ -221,6 +239,156 @@ void BackendProtocol::handleUpdateSensorInfo(const json& req, json& res) {
         res["message"] = errorMsg;
         res["data"] = nullptr;
     }
+}
+
+void BackendProtocol::handleGetRoads(const json& req, json& res) {
+    const auto& roads = tm.getAllRoads();
+    json list = json::array();
+    for (const auto& r : roads) {
+        json item;
+        item["road_id"] = r.roadId;
+        item["display_name"] = r.direction;
+        item["sensor_vehicle_count"] = r.sensorVehicleCount;
+        item["max_waiting_time"] = r.maxWaitingTime;
+        item["normal_queue_size"] = r.normalQueue.size();
+        item["emergency_queue_size"] = r.emergencyQueue.size();
+        list.push_back(item);
+    }
+    res["success"] = true;
+    res["message"] = "Roads retrieved successfully";
+    res["data"] = {{"roads", list}, {"count", list.size()}};
+}
+
+void BackendProtocol::handleAddRoad(const json& req, json& res) {
+    string roadId = req.value("road_id", "");
+    string displayName = req.value("display_name", "");
+    int count = req.value("sensor_count", 0);
+    int wait = req.value("max_wait_time", 0);
+    
+    string errorMsg;
+    if (tm.addRoad(roadId, displayName, count, wait, errorMsg)) {
+        res["success"] = true;
+        res["message"] = "Road added successfully";
+        res["data"] = {
+            {"road_id", roadId},
+            {"display_name", displayName.empty() ? roadId : displayName}
+        };
+    } else {
+        res["success"] = false;
+        res["message"] = errorMsg;
+        res["data"] = nullptr;
+    }
+}
+
+// ---------------------------------------------------------
+// Graph & Dijkstra Handlers
+// ---------------------------------------------------------
+void BackendProtocol::handleGetJunctions(const json& req, json& res) {
+    vector<string> names = graph.getJunctionNames();
+    json list = json::array();
+    for (const auto& name : names) {
+        list.push_back({
+            {"name", name}
+        });
+    }
+    res["success"] = true;
+    res["message"] = "Junctions retrieved successfully";
+    res["data"] = {
+        {"junctions", list},
+        {"count", list.size()}
+    };
+}
+
+void BackendProtocol::handleGetGraphConnections(const json& req, json& res) {
+    auto conns = graph.getRoadConnections();
+    json list = json::array();
+    for (const auto& c : conns) {
+        list.push_back({
+            {"from", c.from},
+            {"to", c.to},
+            {"weight", c.weight},
+            {"base_weight", c.baseWeight}
+        });
+    }
+    res["success"] = true;
+    res["message"] = "Graph connections retrieved successfully";
+    res["data"] = {
+        {"connections", list},
+        {"count", list.size()}
+    };
+}
+
+void BackendProtocol::handleFindShortestPath(const json& req, json& res) {
+    string start = req.value("start", "");
+    string dest  = req.value("destination", "");
+    if (start.empty()) start = req.value("from", "");
+    if (dest.empty())  dest  = req.value("to", "");
+
+    if (start.empty() || dest.empty()) {
+        res["success"] = false;
+        res["message"] = "Start and destination junctions must be specified.";
+        res["data"] = nullptr;
+        return;
+    }
+
+    vector<string> path;
+    int totalCost = 0;
+    string errorMsg;
+
+    if (graph.computeShortestPath(start, dest, path, totalCost, errorMsg)) {
+        string pathStr = "";
+        for (size_t i = 0; i < path.size(); ++i) {
+            pathStr += path[i];
+            if (i + 1 < path.size()) pathStr += " -> ";
+        }
+
+        res["success"] = true;
+        res["message"] = "Shortest route calculated successfully";
+        res["data"] = {
+            {"start", start},
+            {"destination", dest},
+            {"path", path},
+            {"total_cost", totalCost},
+            {"path_string", pathStr}
+        };
+    } else {
+        res["success"] = false;
+        res["message"] = errorMsg;
+        res["data"] = nullptr;
+    }
+}
+
+void BackendProtocol::handleAddJunction(const json& req, json& res) {
+    string name = req.value("name", "");
+    if (name.empty()) {
+        res["success"] = false;
+        res["message"] = "Junction name cannot be empty.";
+        res["data"] = nullptr;
+        return;
+    }
+
+    graph.addJunction(name);
+    res["success"] = true;
+    res["message"] = "Junction \"" + name + "\" added successfully.";
+    res["data"] = {{"name", name}};
+}
+
+void BackendProtocol::handleConnectRoad(const json& req, json& res) {
+    string from = req.value("from", "");
+    string to   = req.value("to", "");
+    int weight  = req.value("weight", 0);
+
+    if (from.empty() || to.empty() || weight <= 0) {
+        res["success"] = false;
+        res["message"] = "Invalid parameters: from, to, and positive weight required.";
+        res["data"] = nullptr;
+        return;
+    }
+
+    graph.connectRoad(from, to, weight);
+    res["success"] = true;
+    res["message"] = "Road connected between \"" + from + "\" and \"" + to + "\".";
+    res["data"] = {{"from", from}, {"to", to}, {"weight", weight}};
 }
 
 void BackendProtocol::handlePing(const json& req, json& res) {

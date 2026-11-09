@@ -1,32 +1,110 @@
 # Smart Traffic Management System
 
 ## Project Overview
-The Smart Traffic Management System is a university-level C++ console application designed to simulate and manage traffic flow. The current implementation completes Phase 2 of the project, focusing on data structure concepts such as Queues and Priority Queues for an individual intersection.
 
-We have now added a **Phase 2.5 Backend Mode** to prepare the application for integration with a Python + CustomTkinter desktop UI.
+The Smart Traffic Management System is a university-level C++ console application that simulates and manages traffic flow. The project is implemented in progressive phases:
 
-## Phase 2: System Design & Implementation Complete
-The core logic for traffic handling has been implemented successfully during Phase 2.
+- **Phase 2** — Single-intersection traffic management using queues and priority queues.
+- **Phase 2.5** — JSON backend protocol enabling a Python + CustomTkinter desktop UI.
+- **Phase 3** — City-wide road network with graph representation, Dijkstra's shortest path, dynamic traffic weights, and adaptive signal simulation.
 
-### Features Implemented
-* **Interactive Console Mode:** Users can continuously add vehicles, process queues, and view simulated sensor data.
-* **Backend Mode:** Allows external UI programs (like Python) to interact with the system via standard input/output using a JSON protocol.
-* **Normal Vehicle Management:** Normal vehicles (Cars, Buses, etc.) are processed in a strict FIFO order.
-* **Emergency Vehicle Management:** Emergency vehicles are prioritized based on their type (Ambulance > Fire Truck > Police). 
-* **Safe Input Validation:** The system correctly handles invalid data inputs to prevent crashes. Invalid road identifiers are rejected, and duplicate vehicle IDs are strictly prevented across all queues.
-* **Independent Road Queues:** Traffic on the North Road is managed entirely independently from the South Road.
-* **Simulated Sensor Updates:** Users can dynamically update the current sensor data (vehicle count and waiting times).
+---
 
-### Project Structure
-* **`Vehicle`**: A struct capturing `vehicleID`, `type`, `waitTime`, `isEmergency`, and `emergencyPriority`. It contains the priority comparison logic.
-* **`Road`**: A class that independently manages the normal `queue`, emergency `priority_queue`, and simulated data for a specific road direction.
-* **`TrafficManager`**: The overarching system that orchestrates the roads, tracking active vehicle IDs, and providing core backend operations and the console interactive menu.
-* **`BackendProtocol`**: The JSON communication layer that interprets commands from standard input and delegates them to the `TrafficManager`, returning responses via standard output.
+## Phase 2: Single Intersection
+
+### Features
+- **Normal Vehicle Queue (FIFO):** Cars, Buses, and other normal vehicles are processed in arrival order.
+- **Emergency Priority Queue:** Ambulances (priority 1) > Fire Trucks (priority 2) > Police (priority 3). Vehicles of the same type are processed in insertion order.
+- **Simulated Sensor Updates:** Set `vehicleCount` and `maxWaitingTime` for North and South roads.
+- **Input Validation:** Duplicate vehicle IDs rejected globally; invalid road IDs and negative values rejected.
+- **Independent Road Queues:** North Road and South Road are managed separately.
+- **Backend Mode:** JSON protocol over stdin/stdout for the Python UI.
+
+### Key Classes
+| Class | Purpose |
+|---|---|
+| `Vehicle` | Struct: id, type, waitTime, isEmergency, emergencyPriority |
+| `Road` | Manages normal FIFO queue + emergency priority queue for one road |
+| `TrafficManager` | Orchestrates both roads, validates input, exposes backend API |
+| `BackendProtocol` | JSON communication layer for the Python UI |
+
+---
+
+## Phase 3: City-Wide Road Network
+
+### Part 1 — Graph Representation
+- Default road network with exactly seven junctions: **Junction A through Junction G**.
+- 10 bidirectional road connections with positive travel-cost edge weights.
+- Adjacency list implementation: extensible for adding custom junctions and roads.
+- Prevents duplicate road connections and duplicate junctions.
+- `addJunction()`, `connectRoad()`, `getJunctionNames()`, `getRoadConnections()`, `displayGraph()`.
+
+### Part 2 — Dijkstra's Shortest Path
+- Finds the minimum-cost route between any two junctions across the 7-junction network.
+- Tested routes: A ➔ G (cost: 9), G ➔ A (cost: 9), B ➔ F (cost: 5), C ➔ E (cost: 4), D ➔ G (cost: 8).
+- Robust error handling: identical start/end validation, non-existent junctions, isolated/unconnected junctions.
+- Simple beginner-friendly implementation with `dist[]`, `visited[]`, `prev[]` arrays.
+
+### Part 3 — Dynamic Traffic Weights
+- Each road stores a `baseWeight` (fixed) and `weight` (effective, updated at runtime).
+- `updateTrafficOnRoad(from, to, vehicleCount, maxWaitTime)` classifies and applies:
+
+| Traffic Level | Condition | Weight Multiplier |
+|---|---|---|
+| LOW | ≤ 5 vehicles AND ≤ 30s wait | × 1.0 (no change) |
+| MEDIUM | ≤ 15 vehicles AND ≤ 60s wait | × 1.5 |
+| HIGH | > 15 vehicles OR > 60s wait | × 2.5 |
+
+- Dijkstra re-runs on updated weights and automatically finds new shortest routes.
+
+### Part 4 — Adaptive Traffic Signal Simulation
+- Reads simulated sensor values (`sensorVehicleCount`, `maxWaitingTime`) from `Road` objects.
+- Classifies each road and assigns green-light durations:
+
+| Level | Green Duration |
+|---|---|
+| LOW | 20 seconds |
+| MEDIUM | 35 seconds |
+| HIGH | 50 seconds |
+| EMERGENCY override | 60 seconds |
+
+- Emergency vehicles always take priority; ties broken by vehicle urgency (Ambulance > Fire Truck > Police).
+
+---
+
+## Project Structure
+
+```
+SmartTrafficManagementSystem/
+├── include/
+│   ├── Vehicle.h
+│   ├── Road.h
+│   ├── TrafficManager.h
+│   ├── BackendProtocol.h
+│   ├── Graph.h            ← Phase 3
+│   ├── TrafficSignal.h    ← Phase 3
+│   └── nlohmann/json.hpp
+├── src/
+│   ├── main.cpp
+│   ├── Vehicle.cpp
+│   ├── Road.cpp
+│   ├── TrafficManager.cpp
+│   ├── BackendProtocol.cpp
+│   ├── Graph.cpp          ← Phase 3
+│   └── TrafficSignal.cpp  ← Phase 3
+├── docs/
+│   └── phase3_implementation.md
+├── ui/                    ← Python frontend
+└── CMakeLists.txt
+```
+
+---
 
 ## Build Instructions
-This project uses CMake and requires C++17. It also depends on the `nlohmann/json` library, which is included locally in `include/nlohmann/json.hpp`.
 
-To build with CMake:
+This project uses **CMake** and requires **C++17**. The `nlohmann/json` library is bundled in `include/nlohmann/json.hpp`.
+
+### Build with CMake
 ```bash
 mkdir build
 cd build
@@ -34,99 +112,106 @@ cmake ..
 cmake --build .
 ```
 
-Alternatively, compile directly using `g++` (if CMake is unavailable):
+### Build directly with clang++ or g++ (if CMake is unavailable)
 ```bash
-g++ -std=c++17 -Iinclude src/main.cpp src/Vehicle.cpp src/Road.cpp src/TrafficManager.cpp src/BackendProtocol.cpp -o SmartTrafficManagementSystem
+clang++ -std=c++17 -Iinclude \
+    src/main.cpp src/Vehicle.cpp src/Road.cpp \
+    src/TrafficManager.cpp src/BackendProtocol.cpp \
+    src/Graph.cpp src/TrafficSignal.cpp \
+    -o SmartTrafficManagementSystem
 ```
+
+---
 
 ## How to Run
 
-### Console Mode (Default)
-To run the interactive console menu, simply launch the executable:
+### Console Mode (default)
+Runs all Phase 3 demonstrations followed by the interactive Phase 2 menu:
 ```bash
 ./SmartTrafficManagementSystem
 ```
 
-### Backend Mode
-To launch the backend process for the Python UI to communicate with, use the `--backend` flag:
+### Graph & Signal Demo only (Phase 3 testing)
+Runs only the Phase 3 demonstrations and exits cleanly:
+```bash
+./SmartTrafficManagementSystem --graph-demo
+```
+
+### Backend Mode (for Python UI)
+Reads JSON from stdin, writes JSON to stdout — used by the Python frontend:
 ```bash
 ./SmartTrafficManagementSystem --backend
 ```
 
-## JSON Communication Protocol
-In Backend Mode, the process reads one JSON object per line from standard input and outputs one JSON object per line to standard output. 
+---
 
-### Supported Operations
-- `ping`: Checks if the backend is alive.
-- `add_normal_vehicle`: Adds a normal vehicle to the queue.
-- `add_emergency_vehicle`: Adds an emergency vehicle with priority (1=Ambulance, 2=Fire Truck, 3=Police).
-- `process_normal_vehicle`: Removes and returns the first vehicle in the normal queue.
-- `process_emergency_vehicle`: Removes and returns the highest-priority vehicle in the emergency queue.
-- `get_normal_vehicles`: Retrieves a list of vehicles in the normal queue (without processing them).
-- `get_emergency_vehicles`: Retrieves a list of vehicles in the emergency queue (without processing them).
-- `get_traffic_info`: Retrieves sensor info and queue sizes for a given road.
-- `update_sensor_info`: Updates the simulated sensor values.
-- `shutdown`: Exits the backend process safely.
+## JSON Backend Protocol
 
-### Example Request
+Supported operations in `--backend` mode:
+
+| Operation | Description |
+|---|---|
+| `ping` | Health check — returns `"pong"` |
+| `add_normal_vehicle` | Add a vehicle to the FIFO queue |
+| `add_emergency_vehicle` | Add an emergency vehicle with priority (1/2/3) |
+| `process_normal_vehicle` | Dequeue and return the first normal vehicle |
+| `process_emergency_vehicle` | Dequeue and return the highest-priority emergency vehicle |
+| `get_normal_vehicles` | List all normal vehicles without removing them |
+| `get_emergency_vehicles` | List all emergency vehicles without removing them |
+| `get_traffic_info` | Return sensor counts and queue sizes for a road |
+| `update_sensor_info` | Update simulated sensor values for a road |
+| `get_roads` | Return list of all roads in multi-road management |
+| `add_road` | Add a new road dynamically |
+| `get_junctions` | Return list of all network junctions (A through G) |
+| `get_graph_connections` | Return all bidirectional road edges and weights |
+| `find_shortest_path` | Execute Dijkstra algorithm to find lowest travel-cost route |
+| `add_junction` | Add a new junction to the graph dynamically |
+| `connect_junction_road` | Connect two junctions with a positive bidirectional weight |
+| `shutdown` | Cleanly exit the backend process |
+
+### Example
+```bash
+echo '{"operation":"add_normal_vehicle","road_id":"NORTH","vehicle_id":"V101","vehicle_type":"Car","waiting_time":30}' \
+  | ./SmartTrafficManagementSystem --backend
+```
 ```json
-{"operation":"add_normal_vehicle","road_id":"NORTH","vehicle_id":"V101","vehicle_type":"Car","waiting_time":30}
+{"data":{"road_id":"NORTH","vehicle_id":"V101"},"message":"Normal vehicle added successfully","success":true}
 ```
 
-### Example Success Response
-```json
-{"success":true,"message":"Normal vehicle added successfully","data":{"vehicle_id":"V101","road_id":"NORTH"}}
-```
+---
 
-### Example Error Response
-```json
-{"success":false,"message":"Vehicle ID already exists.","data":null}
-```
+## Python UI
 
-## Error Handling
-The backend will never crash on malformed input or logic errors. It will simply return a structured JSON response with `"success": false` and a descriptive message. Constraints include:
-- Invalid or unknown operations are rejected safely.
-- Duplicate vehicle IDs are forbidden globally.
-- Only "NORTH" and "SOUTH" are accepted for `road_id`.
-- Waiting times, sensor counts, and priorities must be valid integers and in standard ranges.
+A desktop graphical interface built with Python 3 and CustomTkinter communicates with the C++ backend via the JSON protocol.
 
-## Python UI (Phase 2.5)
-
-A professional desktop graphical user interface has been added using **Python 3** and **CustomTkinter**. The UI acts as a frontend that communicates with the C++ backend. 
-
-### UI Installation
-
-1. Ensure you have Python 3 installed (Python 3.8+ recommended).
-2. Create and activate a virtual environment (optional but recommended):
-   ```bash
-   cd ui
-   python3 -m venv venv
-   # On macOS/Linux:
-   source venv/bin/activate
-   # On Windows:
-   venv\Scripts\activate
-   ```
-3. Install the required dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-### Running the Application
-
-Once the C++ backend is compiled (as described in the Build Instructions above), start the Python UI by running:
-
+### Setup
 ```bash
 cd ui
-python3 main.py
+python3 -m venv venv
+source venv/bin/activate      # macOS/Linux
+# venv\Scripts\activate       # Windows
+pip install -r requirements.txt
 ```
 
-The Python UI will automatically detect and launch the C++ backend executable in the background. Ensure that the `SmartTrafficManagementSystem` executable is present in the main project directory.
+### Run
+```bash
+python3 ui/main.py
+```
 
-## Current Limitations
-* Only models one intersection (North/South roads).
-* Simulated sensor values don't currently affect processing rates (adaptive signal algorithms aren't implemented yet).
+The UI automatically starts the C++ backend in the background. Ensure the executable is compiled first.
 
-## Future Plans (Phase 3)
-The next evolution of this project will support a full city road network:
-* **Graph Integration**: Using intersections as vertices and roads as edges.
-* **Dijkstra's Algorithm**: For calculating route paths based on weight/congestion.
+---
+
+## Project Restrictions
+
+- ✅ Beginner-friendly C++ only (no templates, no smart pointers, simple control flow)
+- ✅ No database
+- ✅ No OS module
+- ✅ No real traffic sensors or external APIs
+- ✅ No machine learning
+
+---
+
+## Documentation
+
+- Phase 3 detailed implementation notes: [`docs/phase3_implementation.md`](docs/phase3_implementation.md)
