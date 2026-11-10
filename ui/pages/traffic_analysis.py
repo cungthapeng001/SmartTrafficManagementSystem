@@ -1,14 +1,7 @@
 import customtkinter as ctk
 from theme import COLORS, get_traffic_level, get_green_duration
 
-
 class TrafficAnalysisPage(ctk.CTkFrame):
-    """
-    Traffic Analysis Page
-    Reads live sensor data from the C++ backend across all managed roads.
-    Displays traffic classification (LOW / MEDIUM / HIGH), computed weight
-    multipliers for graph routing, and green-light timings.
-    """
 
     def __init__(self, master, app):
         super().__init__(master, fg_color="transparent")
@@ -18,7 +11,6 @@ class TrafficAnalysisPage(ctk.CTkFrame):
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(1, weight=1)
 
-        # ---- Info banner ------------------------------------
         banner = ctk.CTkFrame(self, fg_color="#0D2137", corner_radius=8)
         banner.grid(row=0, column=0, sticky="ew", padx=4, pady=(0, 14))
         ctk.CTkLabel(
@@ -29,29 +21,24 @@ class TrafficAnalysisPage(ctk.CTkFrame):
             font=ctk.CTkFont(size=12)
         ).pack(padx=16, pady=10)
 
-        # ---- Scrollable content -----------------------------
         self.scroll = ctk.CTkScrollableFrame(self, fg_color="transparent")
         self.scroll.grid(row=1, column=0, sticky="nsew")
         self.scroll.grid_columnconfigure((0, 1), weight=1)
 
-        # Frame for dynamic road cards
         self.roads_container = ctk.CTkFrame(self.scroll, fg_color="transparent")
         self.roads_container.grid(row=0, column=0, columnspan=2, sticky="nsew")
         self.roads_container.grid_columnconfigure((0, 1), weight=1)
 
-        # Weight multiplier reference card
         ref_card = ctk.CTkFrame(self.scroll, fg_color=COLORS["bg_card"], corner_radius=12)
         ref_card.grid(row=1, column=0, columnspan=2, sticky="ew", pady=(14, 0))
         self._build_reference_card(ref_card)
 
-        # Refresh button
         ctk.CTkButton(self.scroll, text="🔄  Refresh Traffic Analysis",
                       fg_color=COLORS["accent"], hover_color="#1557C0",
                       height=38, corner_radius=8,
                       command=self.refresh_data).grid(
             row=2, column=0, columnspan=2, sticky="ew", pady=14)
 
-    # ----------------------------------------------------------
     def _build_road_card(self, parent, title, road_id, col, row):
         card = ctk.CTkFrame(parent, fg_color=COLORS["bg_card"], corner_radius=12,
                             border_width=1, border_color=COLORS["border"])
@@ -106,7 +93,6 @@ class TrafficAnalysisPage(ctk.CTkFrame):
         card.labels = labels
         return card
 
-    # ----------------------------------------------------------
     def _build_reference_card(self, parent):
         ctk.CTkLabel(parent, text="Traffic Classification & Weight Multiplier Model",
                      font=ctk.CTkFont(size=14, weight="bold"),
@@ -144,7 +130,6 @@ class TrafficAnalysisPage(ctk.CTkFrame):
                      font=ctk.CTkFont(size=11),
                      wraplength=800, justify="left").pack(anchor="w", padx=16, pady=(0, 16))
 
-    # ----------------------------------------------------------
     def _update_card(self, card, data):
         count = data.get("sensor_vehicle_count", 0)
         wait  = data.get("max_waiting_time", 0)
@@ -161,7 +146,6 @@ class TrafficAnalysisPage(ctk.CTkFrame):
         card.labels["level_badge"].configure(text=level, text_color=color)
         card.labels["multiplier"].configure(text=multipliers.get(level, "× 1.0"), text_color=color)
 
-    # ----------------------------------------------------------
     def refresh_data(self):
         if not self.app.backend or not self.app.backend.connected:
             return
@@ -172,7 +156,6 @@ class TrafficAnalysisPage(ctk.CTkFrame):
 
         roads = res["data"].get("roads", [])
 
-        # Clear existing road cards
         for w in self.roads_container.winfo_children():
             w.destroy()
         self.road_cards.clear()

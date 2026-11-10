@@ -7,7 +7,7 @@ Vehicle::Vehicle(std::string id, std::string type, int waitTime, bool isEmergenc
 
 bool Vehicle::operator<(const Vehicle& other) const {
     if (emergencyPriority != other.emergencyPriority) {
-        return emergencyPriority > other.emergencyPriority; 
+        return emergencyPriority > other.emergencyPriority;
     }
     return insertionOrder > other.insertionOrder;
 }

@@ -1,6 +1,5 @@
 import customtkinter as ctk
 
-# ── Color palette ──────────────────────────────────────────────────────────────
 BG_DARK    = "#0D1117"
 BG_CARD    = "#161B22"
 BG_ROW_ALT = "#1C2128"
@@ -12,9 +11,7 @@ YELLOW     = "#D29922"
 RED        = "#DA3633"
 BORDER     = "#30363D"
 
-
 def traffic_badge(sensor_count):
-    """Return (badge_text, badge_color) based on sensor vehicle count."""
     if sensor_count <= 5:
         return "LOW", GREEN
     elif sensor_count <= 15:
@@ -22,35 +19,23 @@ def traffic_badge(sensor_count):
     else:
         return "HIGH", RED
 
-
 class DashboardPage(ctk.CTkFrame):
-    """
-    Dashboard page — Multi-Road Overview.
-    Displays a scrollable grid of road cards, one per road,
-    each showing traffic info fetched live from the C++ backend.
-    """
 
     def __init__(self, master, app):
         super().__init__(master, fg_color="transparent")
         self.app = app
-        self.road_card_frames = {}   # road_id -> card frame reference
+        self.road_card_frames = {}
 
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(1, weight=1)
 
-        # ── Row 0: Summary stat cards ──────────────────────────────────────
         self._build_summary_row()
 
-        # ── Row 1: Scrollable road cards area ──────────────────────────────
         self._build_roads_area()
 
-        # ── Row 2: Quick actions ───────────────────────────────────────────
         self._build_action_row()
 
-    # ── Summary cards ──────────────────────────────────────────────────────────
-
     def _build_summary_row(self):
-        """Four stat cards: Total Vehicles, Normal Queue, Emergency Queue, Active Roads."""
         summary_frame = ctk.CTkFrame(self, fg_color="transparent")
         summary_frame.grid(row=0, column=0, sticky="ew", padx=16, pady=(16, 8))
         summary_frame.grid_columnconfigure((0, 1, 2, 3), weight=1)
@@ -61,7 +46,6 @@ class DashboardPage(ctk.CTkFrame):
         self.active_roads_lbl   = self._make_stat_card(summary_frame, "Active Roads",      "0", ACCENT,    3)
 
     def _make_stat_card(self, parent, title, initial_val, value_color, col):
-        """Create a single summary stat card and return its value label."""
         card = ctk.CTkFrame(parent, fg_color=BG_CARD, corner_radius=12,
                             border_width=1, border_color=BORDER)
         card.grid(row=0, column=col, padx=6, pady=6, sticky="nsew")
@@ -77,17 +61,13 @@ class DashboardPage(ctk.CTkFrame):
         val_lbl.grid(row=1, column=0, padx=16, pady=(0, 14), sticky="w")
         return val_lbl
 
-    # ── Scrollable road cards ──────────────────────────────────────────────────
-
     def _build_roads_area(self):
-        """Scrollable frame that holds one card per road."""
         outer = ctk.CTkFrame(self, fg_color=BG_CARD, corner_radius=12,
                              border_width=1, border_color=BORDER)
         outer.grid(row=1, column=0, sticky="nsew", padx=16, pady=8)
         outer.grid_columnconfigure(0, weight=1)
         outer.grid_rowconfigure(1, weight=1)
 
-        # Header row inside the outer card
         hdr = ctk.CTkFrame(outer, fg_color="transparent")
         hdr.grid(row=0, column=0, sticky="ew", padx=16, pady=(14, 4))
         hdr.grid_columnconfigure(0, weight=1)
@@ -96,7 +76,6 @@ class DashboardPage(ctk.CTkFrame):
                      font=ctk.CTkFont(size=16, weight="bold"),
                      text_color=TEXT_MAIN).grid(row=0, column=0, sticky="w")
 
-        # Scrollable inner frame
         self.scroll_area = ctk.CTkScrollableFrame(
             outer, fg_color="transparent",
             scrollbar_button_color=BORDER,
@@ -106,11 +85,6 @@ class DashboardPage(ctk.CTkFrame):
         self.scroll_area.grid_columnconfigure((0, 1), weight=1)
 
     def _build_road_card(self, parent, road_id, display_name, data, card_num):
-        """
-        Build one road card inside the scrollable area.
-        Two cards per row (col 0 and col 1).
-        Returns the card frame with a .lbls dict for later updates.
-        """
         col = card_num % 2
         row = card_num // 2
 
@@ -121,7 +95,6 @@ class DashboardPage(ctk.CTkFrame):
                   pady=6, sticky="nsew")
         card.grid_columnconfigure(0, weight=1)
 
-        # Road title header row
         hdr = ctk.CTkFrame(card, fg_color="transparent")
         hdr.grid(row=0, column=0, padx=14, pady=(12, 4), sticky="ew")
         hdr.grid_columnconfigure(0, weight=1)
@@ -130,7 +103,6 @@ class DashboardPage(ctk.CTkFrame):
                      font=ctk.CTkFont(size=14, weight="bold"),
                      text_color=TEXT_MAIN).grid(row=0, column=0, sticky="w")
 
-        # Traffic badge
         count = data.get("sensor_vehicle_count", 0)
         badge_text, badge_color = traffic_badge(count)
         badge_lbl = ctk.CTkLabel(hdr, text=badge_text,
@@ -139,11 +111,9 @@ class DashboardPage(ctk.CTkFrame):
                                  corner_radius=6, width=60)
         badge_lbl.grid(row=0, column=1, sticky="e")
 
-        # Thin divider
         ctk.CTkFrame(card, height=1, fg_color=BORDER).grid(
             row=1, column=0, padx=14, pady=(0, 6), sticky="ew")
 
-        # Data rows
         def make_row(r, label_text, value_text):
             f = ctk.CTkFrame(card, fg_color="transparent")
             f.grid(row=r, column=0, padx=14, pady=2, sticky="ew")
@@ -172,10 +142,7 @@ class DashboardPage(ctk.CTkFrame):
         }
         return card
 
-    # ── Action buttons ─────────────────────────────────────────────────────────
-
     def _build_action_row(self):
-        """Quick action buttons row at the bottom."""
         action_frame = ctk.CTkFrame(self, fg_color="transparent")
         action_frame.grid(row=2, column=0, sticky="ew", padx=16, pady=(4, 16))
 
@@ -200,17 +167,10 @@ class DashboardPage(ctk.CTkFrame):
             height=38, command=self.refresh_data
         ).pack(side="left")
 
-    # ── Data refresh ───────────────────────────────────────────────────────────
-
     def refresh_data(self):
-        """
-        Fetch the list of roads from the backend, then get traffic info
-        for each road and rebuild the scrollable road cards.
-        """
         if not self.app.backend.connected:
             return
 
-        # Get the current list of roads
         roads_res = self.app.backend.send_request({"operation": "get_roads"})
         if not roads_res or not roads_res.get("success"):
             self.app.log_activity("Failed to fetch road list", False)
@@ -218,7 +178,6 @@ class DashboardPage(ctk.CTkFrame):
 
         roads_data = roads_res["data"].get("roads", [])
 
-        # Clear and rebuild road cards
         for widget in self.scroll_area.winfo_children():
             widget.destroy()
         self.road_card_frames.clear()
@@ -242,7 +201,6 @@ class DashboardPage(ctk.CTkFrame):
             total_emerg  += eq
             total_vehicles += nq + eq
 
-        # Update summary stat cards
         self.total_vehicles_lbl.configure(text=str(total_vehicles))
         self.normal_queue_lbl.configure(text=str(total_normal))
         self.emerg_queue_lbl.configure(text=str(total_emerg))

@@ -2,13 +2,12 @@
 #include <iostream>
 #include <vector>
 #include <string>
-#include <climits>   // for INT_MAX
+#include <climits>
 #include <cctype>
 #include <algorithm>
 
 using namespace std;
 
-// Helper: convert string to uppercase
 static string toUpperString(const string& s) {
     string res = s;
     for (char& c : res) {
@@ -17,11 +16,8 @@ static string toUpperString(const string& s) {
     return res;
 }
 
-// ---------------------------------------------------------
-// Constructors
-// ---------------------------------------------------------
 Graph::Graph() {
-    // Empty graph by default
+
 }
 
 Graph::Graph(bool initDefault) {
@@ -34,16 +30,9 @@ void Graph::clear() {
     junctions.clear();
 }
 
-// ---------------------------------------------------------
-// initSevenJunctionNetwork
-// Initializes exactly seven default junctions (A through G)
-// with positive travel-cost weights connecting them in a
-// realistic, multi-path road network.
-// ---------------------------------------------------------
 void Graph::initSevenJunctionNetwork(bool verbose) {
     junctions.clear();
 
-    // 1. Add all seven default junctions: A through G
     addJunction("Junction A", verbose);
     addJunction("Junction B", verbose);
     addJunction("Junction C", verbose);
@@ -52,7 +41,6 @@ void Graph::initSevenJunctionNetwork(bool verbose) {
     addJunction("Junction F", verbose);
     addJunction("Junction G", verbose);
 
-    // 2. Connect roads with positive example travel costs (bidirectional)
     connectRoad("Junction A", "Junction B", 4, verbose);
     connectRoad("Junction A", "Junction C", 2, verbose);
     connectRoad("Junction B", "Junction C", 1, verbose);
@@ -65,24 +53,17 @@ void Graph::initSevenJunctionNetwork(bool verbose) {
     connectRoad("Junction F", "Junction G", 4, verbose);
 }
 
-// ---------------------------------------------------------
-// findJunctionIndex
-// Flexible lookup: supports exact match, case-insensitivity,
-// and letter-only lookup (e.g. "A" matches "Junction A").
-// ---------------------------------------------------------
 int Graph::findJunctionIndex(const string& name) const {
     if (name.empty()) return -1;
 
     string target = toUpperString(name);
 
-    // 1. Direct match
     for (size_t i = 0; i < junctions.size(); ++i) {
         if (toUpperString(junctions[i].name) == target) {
             return static_cast<int>(i);
         }
     }
 
-    // 2. Prefix/Suffix match ("A" matches "JUNCTION A", or "JUNCTION A" matches "A")
     for (size_t i = 0; i < junctions.size(); ++i) {
         string jName = toUpperString(junctions[i].name);
         if (jName == "JUNCTION " + target || target == "JUNCTION " + jName) {
@@ -96,14 +77,9 @@ int Graph::findJunctionIndex(const string& name) const {
         }
     }
 
-    return -1; // Not found
+    return -1;
 }
 
-// ---------------------------------------------------------
-// addJunction
-// Adds a new junction to the graph if it doesn't exist yet.
-// Keeps the graph extensible for future junctions.
-// ---------------------------------------------------------
 void Graph::addJunction(const string& name, bool verbose) {
     if (name.empty()) {
         if (verbose) cout << "Error: Junction name cannot be empty.\n";
@@ -121,11 +97,6 @@ void Graph::addJunction(const string& name, bool verbose) {
     if (verbose) cout << "Junction \"" << name << "\" added.\n";
 }
 
-// ---------------------------------------------------------
-// connectRoad
-// Creates a bidirectional road between two junctions with
-// positive weight. Prevents duplicate edges.
-// ---------------------------------------------------------
 void Graph::connectRoad(const string& fromName, const string& toName, int weight, bool verbose) {
     if (weight <= 0) {
         if (verbose) cout << "Error: Road weight must be a positive number.\n";
@@ -151,10 +122,9 @@ void Graph::connectRoad(const string& fromName, const string& toName, int weight
     string actualFrom = junctions[fromIndex].name;
     string actualTo   = junctions[toIndex].name;
 
-    // Check for existing connection to avoid duplicates
     for (size_t r = 0; r < junctions[fromIndex].roads.size(); ++r) {
         if (junctions[fromIndex].roads[r].destination == actualTo) {
-            // Update weight if already connected
+
             junctions[fromIndex].roads[r].baseWeight = weight;
             junctions[fromIndex].roads[r].weight = weight;
             for (size_t rb = 0; rb < junctions[toIndex].roads.size(); ++rb) {
@@ -169,14 +139,12 @@ void Graph::connectRoad(const string& fromName, const string& toName, int weight
         }
     }
 
-    // Build the edge going from -> to
     Edge edgeForward;
     edgeForward.destination  = actualTo;
     edgeForward.baseWeight   = weight;
     edgeForward.weight       = weight;
     edgeForward.trafficLevel = LOW;
 
-    // Build the edge going to -> from (bidirectional road)
     Edge edgeBackward;
     edgeBackward.destination  = actualFrom;
     edgeBackward.baseWeight   = weight;
@@ -202,7 +170,7 @@ std::vector<Graph::RoadConnectionInfo> Graph::getRoadConnections() const {
     for (size_t i = 0; i < junctions.size(); ++i) {
         for (size_t r = 0; r < junctions[i].roads.size(); ++r) {
             const Edge& edge = junctions[i].roads[r];
-            // To report each bidirectional edge once, order by name
+
             if (junctions[i].name < edge.destination) {
                 RoadConnectionInfo info;
                 info.from = junctions[i].name;
@@ -362,9 +330,6 @@ int Graph::pickClosestUnvisited(const vector<int>& dist,
     return closestIndex;
 }
 
-// ---------------------------------------------------------
-// computeShortestPath (Dijkstra's Algorithm)
-// ---------------------------------------------------------
 bool Graph::computeShortestPath(const string& startName,
                                 const string& endName,
                                 vector<string>& path,
@@ -400,12 +365,12 @@ bool Graph::computeShortestPath(const string& startName,
     for (int step = 0; step < n; step++) {
         int current = pickClosestUnvisited(dist, visited);
         if (current == -1) {
-            break; // No more reachable junctions
+            break;
         }
 
         visited[current] = true;
         if (current == endIdx) {
-            break; // Found shortest path to destination
+            break;
         }
 
         for (size_t r = 0; r < junctions[current].roads.size(); r++) {
@@ -429,7 +394,6 @@ bool Graph::computeShortestPath(const string& startName,
         return false;
     }
 
-    // Reconstruct path
     int current = endIdx;
     while (current != -1) {
         path.push_back(junctions[current].name);

@@ -1,14 +1,7 @@
 import customtkinter as ctk
 from theme import COLORS, get_traffic_level, get_green_duration
 
-
 class SignalControlPage(ctk.CTkFrame):
-    """
-    Signal Control Page
-    Adaptive traffic signal controller simulation across multiple road intersections.
-    Dynamically compares traffic demands between any two configured roads and
-    evaluates emergency vehicle preemption and green-light timings.
-    """
 
     def __init__(self, master, app):
         super().__init__(master, fg_color="transparent")
@@ -18,7 +11,6 @@ class SignalControlPage(ctk.CTkFrame):
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(2, weight=1)
 
-        # ── Banner ─────────────────────────────────────────────────────────────
         banner = ctk.CTkFrame(self, fg_color="#0D2137", corner_radius=8)
         banner.grid(row=0, column=0, sticky="ew", padx=4, pady=(0, 10))
         ctk.CTkLabel(
@@ -29,7 +21,6 @@ class SignalControlPage(ctk.CTkFrame):
             font=ctk.CTkFont(size=12)
         ).pack(padx=16, pady=10)
 
-        # ── Emergency alert banner (shown when emergency queued) ────────────────
         self.emerg_banner = ctk.CTkFrame(self, fg_color="#2D0000", corner_radius=8)
         self.emerg_banner_lbl = ctk.CTkLabel(
             self.emerg_banner,
@@ -39,7 +30,6 @@ class SignalControlPage(ctk.CTkFrame):
         )
         self.emerg_banner_lbl.pack(padx=16, pady=10)
 
-        # ── Two Road Comparison Panels ─────────────────────────────────────────
         road_row = ctk.CTkFrame(self, fg_color="transparent")
         road_row.grid(row=2, column=0, sticky="nsew", padx=4)
         road_row.grid_columnconfigure(0, weight=1)
@@ -52,7 +42,6 @@ class SignalControlPage(ctk.CTkFrame):
         self.panel1 = self._build_road_panel(road_row, self.road1_var, 0)
         self.panel2 = self._build_road_panel(road_row, self.road2_var, 1)
 
-        # ── Decision panel ─────────────────────────────────────────────────────
         decision_card = ctk.CTkFrame(
             self, fg_color=COLORS["bg_card"], corner_radius=12,
             border_width=1, border_color=COLORS["border"]
@@ -61,7 +50,6 @@ class SignalControlPage(ctk.CTkFrame):
         decision_card.grid_columnconfigure(0, weight=1)
         self._build_decision_panel(decision_card)
 
-        # ── Action buttons ─────────────────────────────────────────────────────
         btn_row = ctk.CTkFrame(self, fg_color="transparent")
         btn_row.grid(row=4, column=0, sticky="ew", padx=4, pady=12)
 
@@ -99,7 +87,6 @@ class SignalControlPage(ctk.CTkFrame):
         card.grid(row=0, column=col, padx=padx, sticky="nsew")
         card.grid_columnconfigure(0, weight=1)
 
-        # Header with Road Selection Dropdown
         hdr = ctk.CTkFrame(card, fg_color="transparent")
         hdr.grid(row=0, column=0, padx=16, pady=(14, 4), sticky="ew")
         hdr.grid_columnconfigure(1, weight=1)
@@ -126,7 +113,6 @@ class SignalControlPage(ctk.CTkFrame):
             row=1, column=0, padx=16, pady=(10, 8), sticky="ew"
         )
 
-        # Signal circle indicator
         signal_circle = ctk.CTkLabel(
             card, text="⬤", font=ctk.CTkFont(size=36),
             text_color=COLORS["border"]
@@ -309,7 +295,6 @@ class SignalControlPage(ctk.CTkFrame):
         r1_name = self.road1_var.get()
         r2_name = self.road2_var.get()
 
-        # Emergency override check
         if eq1 > 0 or eq2 > 0:
             if eq1 > 0:
                 winner_panel, loser_panel = self.panel1, self.panel2
@@ -331,7 +316,6 @@ class SignalControlPage(ctk.CTkFrame):
             self.app.log_activity(f"Adaptive signal: Emergency preemption -> {winner_name}", True)
             return
 
-        # Normal comparison logic
         level_score = {"HIGH": 3, "MEDIUM": 2, "LOW": 1}
         l1 = getattr(self.panel1, "level", "LOW")
         l2 = getattr(self.panel2, "level", "LOW")

@@ -4,7 +4,6 @@ build/
 *.obj
 SmartTrafficManagementSystem
 
-# Python
 ui/venv/
 __pycache__/
 *.pyc

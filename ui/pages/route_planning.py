@@ -22,13 +22,7 @@ DEFAULT_JUNCTIONS = [
     "Junction G"
 ]
 
-
 class RoutePlanningPage(ctk.CTkFrame):
-    """
-    Route Planning Page
-    Finds optimal routes between seven network junctions (A–G)
-    using Dijkstra's shortest path algorithm executed in the C++ backend.
-    """
 
     def __init__(self, master, app):
         super().__init__(master, fg_color="transparent")
@@ -39,7 +33,6 @@ class RoutePlanningPage(ctk.CTkFrame):
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(1, weight=1)
 
-        # ── Top Information Banner ──────────────────────────────
         banner = ctk.CTkFrame(self, fg_color="#0D2137", corner_radius=8, border_width=1, border_color="#1F4B7A")
         banner.grid(row=0, column=0, sticky="ew", padx=16, pady=(12, 12))
         banner.grid_columnconfigure(0, weight=1)
@@ -55,14 +48,12 @@ class RoutePlanningPage(ctk.CTkFrame):
             font=ctk.CTkFont(size=12, weight="bold")
         ).pack(anchor="w", padx=16, pady=10)
 
-        # ── Main 2-Column Content Layout ────────────────────────
         content = ctk.CTkFrame(self, fg_color="transparent")
         content.grid(row=1, column=0, sticky="nsew", padx=16, pady=(0, 16))
         content.grid_columnconfigure(0, weight=1)
         content.grid_columnconfigure(1, weight=1)
         content.grid_rowconfigure(0, weight=1)
 
-        # Left Column: Search Form + Road Connections Table
         left_scroll = ctk.CTkScrollableFrame(
             content,
             fg_color="transparent",
@@ -74,7 +65,6 @@ class RoutePlanningPage(ctk.CTkFrame):
         self._build_input_panel(left_scroll)
         self._build_connections_panel(left_scroll)
 
-        # Right Column: Result Display + Network Topology
         right_scroll = ctk.CTkScrollableFrame(
             content,
             fg_color="transparent",
@@ -86,15 +76,12 @@ class RoutePlanningPage(ctk.CTkFrame):
         self._build_result_panel(right_scroll)
         self._build_topology_panel(right_scroll)
 
-        # Initial data load from backend
         self.after(200, self.refresh_data)
 
-    # ── Left Column: Input Form ────────────────────────────────
     def _build_input_panel(self, parent):
         card = ctk.CTkFrame(parent, fg_color=BG_CARD, corner_radius=12, border_width=1, border_color=BORDER)
         card.pack(fill="x", expand=False, pady=(0, 16))
 
-        # Title
         ctk.CTkLabel(
             card,
             text="🗺️  Route Planning & Search",
@@ -109,16 +96,13 @@ class RoutePlanningPage(ctk.CTkFrame):
             text_color=TEXT_MUTED
         ).pack(anchor="w", padx=20, pady=(0, 16))
 
-        # Divider
         ctk.CTkFrame(card, height=1, fg_color=BORDER).pack(fill="x", padx=20, pady=(0, 16))
 
-        # Dropdowns Frame
         grid_frame = ctk.CTkFrame(card, fg_color="transparent")
         grid_frame.pack(fill="x", padx=20, pady=(0, 12))
         grid_frame.grid_columnconfigure(0, weight=1)
         grid_frame.grid_columnconfigure(1, weight=1)
 
-        # Starting Junction
         ctk.CTkLabel(
             grid_frame,
             text="Starting Junction:",
@@ -141,7 +125,6 @@ class RoutePlanningPage(ctk.CTkFrame):
         )
         self.start_menu.grid(row=1, column=0, sticky="ew", padx=(0, 8), pady=(0, 8))
 
-        # Destination Junction
         ctk.CTkLabel(
             grid_frame,
             text="Destination Junction:",
@@ -164,7 +147,6 @@ class RoutePlanningPage(ctk.CTkFrame):
         )
         self.end_menu.grid(row=1, column=1, sticky="ew", padx=(8, 0), pady=(0, 8))
 
-        # Warning banner for same junction
         self.validation_frame = ctk.CTkFrame(card, fg_color="#332200", corner_radius=6, border_width=1, border_color=YELLOW)
         self.validation_label = ctk.CTkLabel(
             self.validation_frame,
@@ -174,7 +156,6 @@ class RoutePlanningPage(ctk.CTkFrame):
         )
         self.validation_label.pack(padx=10, pady=6)
 
-        # Action Button
         self.find_btn = ctk.CTkButton(
             card,
             text="🔍  Find Shortest Route",
@@ -187,7 +168,6 @@ class RoutePlanningPage(ctk.CTkFrame):
         )
         self.find_btn.pack(fill="x", padx=20, pady=(10, 16))
 
-        # Quick Test Route Presets
         presets_label = ctk.CTkLabel(
             card,
             text="Quick Test Route Presets:",
@@ -226,12 +206,10 @@ class RoutePlanningPage(ctk.CTkFrame):
 
         self._check_validation()
 
-    # ── Left Column: Network Connections Table ─────────────────
     def _build_connections_panel(self, parent):
         card = ctk.CTkFrame(parent, fg_color=BG_CARD, corner_radius=12, border_width=1, border_color=BORDER)
         card.pack(fill="x", expand=False)
 
-        # Header
         hdr = ctk.CTkFrame(card, fg_color="transparent")
         hdr.pack(fill="x", padx=20, pady=(16, 8))
         hdr.grid_columnconfigure(0, weight=1)
@@ -262,21 +240,17 @@ class RoutePlanningPage(ctk.CTkFrame):
             text_color=TEXT_MUTED
         ).pack(anchor="w", padx=20, pady=(0, 10))
 
-        # Connections list container
         self.connections_container = ctk.CTkFrame(card, fg_color="transparent")
         self.connections_container.pack(fill="x", padx=16, pady=(0, 16))
 
-        # Render placeholder or default connections
         self._render_connections_list()
 
     def _render_connections_list(self):
-        # Clear existing items
         for child in self.connections_container.winfo_children():
             child.destroy()
 
         conns = self.connections
         if not conns:
-            # Fallback default 10 connections if not yet fetched
             conns = [
                 {"from": "Junction A", "to": "Junction B", "weight": 4},
                 {"from": "Junction A", "to": "Junction C", "weight": 2},
@@ -298,7 +272,6 @@ class RoutePlanningPage(ctk.CTkFrame):
             row.pack(fill="x", pady=2)
             row.grid_columnconfigure(0, weight=1)
 
-            # Left: Route pair
             conn_text = f"  {c['from']}  ◄────►  {c['to']}"
             ctk.CTkLabel(
                 row,
@@ -307,7 +280,6 @@ class RoutePlanningPage(ctk.CTkFrame):
                 text_color=TEXT_MAIN
             ).grid(row=0, column=0, sticky="w", padx=8, pady=4)
 
-            # Right: Weight badge
             weight_text = f"Cost: {c['weight']}"
             ctk.CTkLabel(
                 row,
@@ -320,7 +292,6 @@ class RoutePlanningPage(ctk.CTkFrame):
                 pady=2
             ).grid(row=0, column=1, sticky="e", padx=8, pady=4)
 
-    # ── Right Column: Result Panel ─────────────────────────────
     def _build_result_panel(self, parent):
         self.result_card = ctk.CTkFrame(parent, fg_color=BG_CARD, corner_radius=12, border_width=1, border_color=BORDER)
         self.result_card.pack(fill="x", expand=False, pady=(0, 16))
@@ -341,11 +312,9 @@ class RoutePlanningPage(ctk.CTkFrame):
 
         ctk.CTkFrame(self.result_card, height=1, fg_color=BORDER).pack(fill="x", padx=20, pady=(0, 16))
 
-        # Inner dynamic result container
         self.result_content = ctk.CTkFrame(self.result_card, fg_color=BG_DARK, corner_radius=8, border_width=1, border_color=BORDER)
         self.result_content.pack(fill="x", padx=20, pady=(0, 20))
 
-        # Initial default view
         self._display_initial_state()
 
     def _display_initial_state(self):
@@ -377,7 +346,6 @@ class RoutePlanningPage(ctk.CTkFrame):
         box = ctk.CTkFrame(self.result_content, fg_color="transparent")
         box.pack(padx=20, pady=24, fill="both")
 
-        # Warning Badge
         badge = ctk.CTkLabel(
             box,
             text="⚠️  IDENTICAL START & DESTINATION",
@@ -415,7 +383,6 @@ class RoutePlanningPage(ctk.CTkFrame):
         box = ctk.CTkFrame(self.result_content, fg_color="transparent")
         box.pack(padx=16, pady=16, fill="both")
 
-        # Status badge row
         status_row = ctk.CTkFrame(box, fg_color="transparent")
         status_row.pack(fill="x", pady=(0, 12))
         status_row.grid_columnconfigure(0, weight=1)
@@ -432,33 +399,28 @@ class RoutePlanningPage(ctk.CTkFrame):
         )
         badge.grid(row=0, column=0, sticky="w")
 
-        # Metric Stats Cards (Total Cost, Hops, Nodes)
         stats_frame = ctk.CTkFrame(box, fg_color="transparent")
         stats_frame.pack(fill="x", pady=(0, 14))
         stats_frame.grid_columnconfigure(0, weight=1)
         stats_frame.grid_columnconfigure(1, weight=1)
         stats_frame.grid_columnconfigure(2, weight=1)
 
-        # Stat 1: Total Cost
         c1 = ctk.CTkFrame(stats_frame, fg_color=BG_CARD, corner_radius=8, border_width=1, border_color=BORDER)
         c1.grid(row=0, column=0, padx=(0, 4), sticky="nsew")
         ctk.CTkLabel(c1, text="TOTAL COST", font=ctk.CTkFont(size=10, weight="bold"), text_color=TEXT_MUTED).pack(pady=(8, 2))
         ctk.CTkLabel(c1, text=str(total_cost), font=ctk.CTkFont(size=24, weight="bold"), text_color="#58A6FF").pack(pady=(0, 8))
 
-        # Stat 2: Hops (Segments)
         hops = max(0, len(path) - 1)
         c2 = ctk.CTkFrame(stats_frame, fg_color=BG_CARD, corner_radius=8, border_width=1, border_color=BORDER)
         c2.grid(row=0, column=1, padx=4, sticky="nsew")
         ctk.CTkLabel(c2, text="ROAD HOPS", font=ctk.CTkFont(size=10, weight="bold"), text_color=TEXT_MUTED).pack(pady=(8, 2))
         ctk.CTkLabel(c2, text=f"{hops} segs", font=ctk.CTkFont(size=20, weight="bold"), text_color=TEXT_MAIN).pack(pady=(0, 8))
 
-        # Stat 3: Junctions count
         c3 = ctk.CTkFrame(stats_frame, fg_color=BG_CARD, corner_radius=8, border_width=1, border_color=BORDER)
         c3.grid(row=0, column=2, padx=(4, 0), sticky="nsew")
         ctk.CTkLabel(c3, text="JUNCTIONS", font=ctk.CTkFont(size=10, weight="bold"), text_color=TEXT_MUTED).pack(pady=(8, 2))
         ctk.CTkLabel(c3, text=str(len(path)), font=ctk.CTkFont(size=20, weight="bold"), text_color=TEXT_MAIN).pack(pady=(0, 8))
 
-        # Full Path Visualization
         ctk.CTkLabel(
             box,
             text="Path Sequence:",
@@ -469,7 +431,6 @@ class RoutePlanningPage(ctk.CTkFrame):
         path_box = ctk.CTkFrame(box, fg_color="#101826", corner_radius=6, border_width=1, border_color="#1F4B7A")
         path_box.pack(fill="x", pady=(0, 14))
 
-        # Format visual arrow sequence
         arrow_str = "  ➜  ".join(path)
         ctk.CTkLabel(
             path_box,
@@ -480,7 +441,6 @@ class RoutePlanningPage(ctk.CTkFrame):
             justify="center"
         ).pack(padx=12, pady=12)
 
-        # Step by Step Legs
         if len(path) > 1:
             ctk.CTkLabel(
                 box,
@@ -496,7 +456,6 @@ class RoutePlanningPage(ctk.CTkFrame):
                 from_j = path[i]
                 to_j = path[i + 1]
 
-                # Find edge cost from known connections
                 edge_cost = "?"
                 for c in self.connections:
                     if (c["from"] == from_j and c["to"] == to_j) or (c["from"] == to_j and c["to"] == from_j):
@@ -566,7 +525,6 @@ class RoutePlanningPage(ctk.CTkFrame):
             wraplength=400
         ).pack(anchor="w")
 
-    # ── Right Column: Topology Map Panel ───────────────────────
     def _build_topology_panel(self, parent):
         card = ctk.CTkFrame(parent, fg_color=BG_CARD, corner_radius=12, border_width=1, border_color=BORDER)
         card.pack(fill="x", expand=False)
@@ -622,7 +580,6 @@ class RoutePlanningPage(ctk.CTkFrame):
             justify="left"
         ).pack(anchor="w", padx=20, pady=(0, 16))
 
-    # ── Event Handlers ─────────────────────────────────────────
     def _on_junction_changed(self, _=None):
         self._check_validation()
 
@@ -685,12 +642,10 @@ class RoutePlanningPage(ctk.CTkFrame):
                     False
                 )
 
-    # ── Data Refresh ───────────────────────────────────────────
     def refresh_data(self):
         if not self.app.backend or not self.app.backend.connected:
             return
 
-        # 1. Fetch Junctions
         res_j = self.app.backend.send_request({"operation": "get_junctions"})
         if res_j.get("success") and "data" in res_j and "junctions" in res_j["data"]:
             names = [j["name"] for j in res_j["data"]["junctions"]]
@@ -699,13 +654,11 @@ class RoutePlanningPage(ctk.CTkFrame):
                 self.start_menu.configure(values=names)
                 self.end_menu.configure(values=names)
 
-                # Ensure current selections are valid
                 if self.start_var.get() not in names:
                     self.start_var.set(names[0])
                 if self.end_var.get() not in names:
                     self.end_var.set(names[-1] if len(names) > 1 else names[0])
 
-        # 2. Fetch Graph Road Connections
         res_c = self.app.backend.send_request({"operation": "get_graph_connections"})
         if res_c.get("success") and "data" in res_c and "connections" in res_c["data"]:
             self.connections = res_c["data"]["connections"]

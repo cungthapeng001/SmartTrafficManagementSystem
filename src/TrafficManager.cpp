@@ -7,7 +7,6 @@
 
 using namespace std;
 
-// Helper: convert string to uppercase for case-insensitive lookup
 static string toUpperStr(const string& s) {
     string res = s;
     for (char& c : res) {
@@ -17,7 +16,7 @@ static string toUpperStr(const string& s) {
 }
 
 TrafficManager::TrafficManager() : emergencyCounter(0) {
-    // Initialize default set of roads representing a multi-road network
+
     roads.push_back(Road("NORTH", "North Road", 15, 45));
     roads.push_back(Road("SOUTH", "South Road", 5, 20));
     roads.push_back(Road("EAST", "East Road", 8, 30));
@@ -63,14 +62,12 @@ Road* TrafficManager::getRoad(const std::string& roadId) {
 
     string target = toUpperStr(roadId);
 
-    // Exact match on roadId or direction
     for (size_t i = 0; i < roads.size(); ++i) {
         if (toUpperStr(roads[i].roadId) == target || toUpperStr(roads[i].direction) == target) {
             return &roads[i];
         }
     }
 
-    // Substring / contains match (e.g. "NORTH" matches "North Road")
     for (size_t i = 0; i < roads.size(); ++i) {
         string rId = toUpperStr(roads[i].roadId);
         string rDir = toUpperStr(roads[i].direction);
@@ -100,7 +97,6 @@ bool TrafficManager::addRoad(const std::string& roadId, const std::string& displ
         return false;
     }
 
-    // Check if ID already exists
     if (getRoad(roadId) != nullptr) {
         errorMessage = "A road with this ID or name already exists.";
         return false;

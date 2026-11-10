@@ -12,7 +12,6 @@ YELLOW     = COLORS["yellow"]
 RED        = COLORS["red"]
 BORDER     = COLORS["border"]
 
-# Palette of badge colors for different roads
 ROAD_COLORS = {
     "NORTH":   "#1F6FEB",
     "SOUTH":   "#8957E5",
@@ -21,21 +20,14 @@ ROAD_COLORS = {
     "CENTRAL": "#DA3633",
 }
 
-
 def get_road_badge_color(road_id):
     if road_id in ROAD_COLORS:
         return ROAD_COLORS[road_id]
-    # Derive a consistent hash color for dynamically added roads
     palette = ["#1F6FEB", "#8957E5", "#238636", "#D29922", "#E3671A", "#388BFD", "#A371F7"]
     idx = abs(hash(road_id)) % len(palette)
     return palette[idx]
 
-
 class NormalVehiclesPage(ctk.CTkFrame):
-    """
-    Manage normal (non-emergency) vehicle queues across multiple roads.
-    Provides dynamic road selection, vehicle queue display, and FIFO processing.
-    """
 
     def __init__(self, master, app):
         super().__init__(master, fg_color="transparent")
@@ -45,22 +37,17 @@ class NormalVehiclesPage(ctk.CTkFrame):
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(1, weight=1)
 
-        # ── Form variables ──────────────────────────────────────────────────
         self.id_var   = ctk.StringVar()
         self.type_var = ctk.StringVar(value="Car")
         self.road_var = ctk.StringVar(value="NORTH")
         self.wait_var = ctk.StringVar(value="0")
         self.filter_var = ctk.StringVar(value="ALL ROADS")
 
-        # ── Build UI sections ───────────────────────────────────────────────
         self._build_form_card()
         self._build_table()
         self._build_action_row()
 
-    # ── Form card ──────────────────────────────────────────────────────────────
-
     def _build_form_card(self):
-        """Styled card containing vehicle input fields and submit button."""
         self.form_frame = ctk.CTkFrame(
             self, fg_color=BG_CARD, corner_radius=12,
             border_width=1, border_color=BORDER
@@ -68,7 +55,6 @@ class NormalVehiclesPage(ctk.CTkFrame):
         self.form_frame.grid(row=0, column=0, sticky="ew", padx=16, pady=(16, 8))
         self.form_frame.grid_columnconfigure((1, 3), weight=1)
 
-        # Section title
         ctk.CTkLabel(
             self.form_frame,
             text="Add Normal Vehicle",
@@ -76,7 +62,6 @@ class NormalVehiclesPage(ctk.CTkFrame):
             text_color=TEXT_MAIN
         ).grid(row=0, column=0, columnspan=4, sticky="w", padx=16, pady=(14, 8))
 
-        # ── Row 1: Vehicle ID and Type ──
         ctk.CTkLabel(self.form_frame, text="Vehicle ID:",
                      font=ctk.CTkFont(size=13), text_color=TEXT_MUTED
                      ).grid(row=1, column=0, padx=(16, 4), pady=10, sticky="e")
@@ -106,7 +91,6 @@ class NormalVehiclesPage(ctk.CTkFrame):
             corner_radius=8
         ).grid(row=1, column=3, padx=(4, 16), pady=10, sticky="ew")
 
-        # ── Row 2: Dynamic Road Selection and Wait Time ──
         ctk.CTkLabel(self.form_frame, text="Road:",
                      font=ctk.CTkFont(size=13), text_color=TEXT_MUTED
                      ).grid(row=2, column=0, padx=(16, 4), pady=10, sticky="e")
@@ -137,7 +121,6 @@ class NormalVehiclesPage(ctk.CTkFrame):
             corner_radius=8
         ).grid(row=2, column=3, padx=(4, 16), pady=10, sticky="ew")
 
-        # ── Submit button ──
         ctk.CTkButton(
             self.form_frame,
             text="➕  Add Normal Vehicle to Selected Road",
@@ -149,10 +132,7 @@ class NormalVehiclesPage(ctk.CTkFrame):
             command=self.add_vehicle
         ).grid(row=3, column=0, columnspan=4, padx=16, pady=(8, 16))
 
-    # ── Scrollable table ───────────────────────────────────────────────────────
-
     def _build_table(self):
-        """Scrollable table showing queued normal vehicles across roads."""
         table_card = ctk.CTkFrame(
             self, fg_color=BG_CARD, corner_radius=12,
             border_width=1, border_color=BORDER
@@ -161,7 +141,6 @@ class NormalVehiclesPage(ctk.CTkFrame):
         table_card.grid_columnconfigure(0, weight=1)
         table_card.grid_rowconfigure(1, weight=1)
 
-        # Header bar with Road filter
         hdr = ctk.CTkFrame(table_card, fg_color="transparent")
         hdr.grid(row=0, column=0, sticky="ew", padx=16, pady=(14, 4))
         hdr.grid_columnconfigure(0, weight=1)
@@ -173,7 +152,6 @@ class NormalVehiclesPage(ctk.CTkFrame):
             text_color=TEXT_MAIN
         ).grid(row=0, column=0, sticky="w")
 
-        # Filter dropdown
         filter_box = ctk.CTkFrame(hdr, fg_color="transparent")
         filter_box.grid(row=0, column=1, sticky="e")
 
@@ -191,7 +169,6 @@ class NormalVehiclesPage(ctk.CTkFrame):
         )
         self.filter_menu.pack(side="left")
 
-        # Scrollable inner frame
         self.table_frame = ctk.CTkScrollableFrame(
             table_card,
             fg_color="transparent",
@@ -251,14 +228,10 @@ class NormalVehiclesPage(ctk.CTkFrame):
 
         self.row_widgets.extend([w1, w2, w3, w4])
 
-    # ── Action buttons ─────────────────────────────────────────────────────────
-
     def _build_action_row(self):
-        """Process and refresh buttons below the table."""
         self.action_frame = ctk.CTkFrame(self, fg_color="transparent")
         self.action_frame.grid(row=2, column=0, sticky="ew", padx=16, pady=(4, 16))
 
-        # Process from Selected Road
         ctk.CTkButton(
             self.action_frame,
             text="▶  Process Vehicle From Selected Road",
@@ -284,10 +257,7 @@ class NormalVehiclesPage(ctk.CTkFrame):
             command=self.refresh_data
         ).pack(side="right")
 
-    # ── Backend operations ─────────────────────────────────────────────────────
-
     def update_road_list(self):
-        """Fetch current list of roads from backend and update dropdowns."""
         if not self.app.backend or not self.app.backend.connected:
             return
         res = self.app.backend.send_request({"operation": "get_roads"})

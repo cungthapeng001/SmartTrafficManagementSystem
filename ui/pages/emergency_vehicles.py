@@ -9,7 +9,7 @@ TEXT_MAIN  = COLORS["text_main"]
 TEXT_MUTED = COLORS["text_muted"]
 GREEN      = COLORS["green"]
 YELLOW     = COLORS["yellow"]
-ORANGE     = "#E3671A"   # P2 priority color
+ORANGE     = "#E3671A"
 RED        = COLORS["red"]
 BORDER     = COLORS["border"]
 
@@ -33,7 +33,6 @@ ROAD_COLORS = {
     "CENTRAL": "#DA3633",
 }
 
-
 def get_road_badge_color(road_id):
     if road_id in ROAD_COLORS:
         return ROAD_COLORS[road_id]
@@ -41,13 +40,7 @@ def get_road_badge_color(road_id):
     idx = abs(hash(road_id)) % len(palette)
     return palette[idx]
 
-
 class EmergencyVehiclesPage(ctk.CTkFrame):
-    """
-    Manage emergency vehicle priority queues across multiple roads.
-    Supports dynamic road selection, priority classification (P1/P2/P3),
-    and priority queue dequeuing via the C++ backend.
-    """
 
     def __init__(self, master, app):
         super().__init__(master, fg_color="transparent")
@@ -57,22 +50,17 @@ class EmergencyVehiclesPage(ctk.CTkFrame):
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(1, weight=1)
 
-        # ── Form variables ──────────────────────────────────────────────────
         self.id_var     = ctk.StringVar()
         self.type_var   = ctk.StringVar(value="Ambulance")
         self.road_var   = ctk.StringVar(value="NORTH")
         self.wait_var   = ctk.StringVar(value="0")
         self.filter_var = ctk.StringVar(value="ALL ROADS")
 
-        # ── Build UI sections ───────────────────────────────────────────────
         self._build_form_card()
         self._build_table()
         self._build_action_row()
 
-    # ── Form card ──────────────────────────────────────────────────────────────
-
     def _build_form_card(self):
-        """Styled card with emergency vehicle input form."""
         self.form_frame = ctk.CTkFrame(
             self, fg_color=BG_CARD, corner_radius=12,
             border_width=1, border_color=BORDER
@@ -87,7 +75,6 @@ class EmergencyVehiclesPage(ctk.CTkFrame):
             text_color=RED
         ).grid(row=0, column=0, columnspan=4, sticky="w", padx=16, pady=(14, 8))
 
-        # Row 1: Vehicle ID and Emergency Type
         ctk.CTkLabel(self.form_frame, text="Vehicle ID:",
                      font=ctk.CTkFont(size=13), text_color=TEXT_MUTED
                      ).grid(row=1, column=0, padx=(16, 4), pady=10, sticky="e")
@@ -117,7 +104,6 @@ class EmergencyVehiclesPage(ctk.CTkFrame):
             corner_radius=8
         ).grid(row=1, column=3, padx=(4, 16), pady=10, sticky="ew")
 
-        # Row 2: Road and Wait Time
         ctk.CTkLabel(self.form_frame, text="Assigned Road:",
                      font=ctk.CTkFont(size=13), text_color=TEXT_MUTED
                      ).grid(row=2, column=0, padx=(16, 4), pady=10, sticky="e")
@@ -148,7 +134,6 @@ class EmergencyVehiclesPage(ctk.CTkFrame):
             corner_radius=8
         ).grid(row=2, column=3, padx=(4, 16), pady=10, sticky="ew")
 
-        # Submit button
         ctk.CTkButton(
             self.form_frame,
             text="🚨  Add Emergency Vehicle to Priority Queue",
@@ -160,10 +145,7 @@ class EmergencyVehiclesPage(ctk.CTkFrame):
             command=self.add_vehicle
         ).grid(row=3, column=0, columnspan=4, padx=16, pady=(8, 16))
 
-    # ── Scrollable table ───────────────────────────────────────────────────────
-
     def _build_table(self):
-        """Scrollable table showing queued emergency vehicles."""
         table_card = ctk.CTkFrame(
             self, fg_color=BG_CARD, corner_radius=12,
             border_width=1, border_color=BORDER
@@ -172,7 +154,6 @@ class EmergencyVehiclesPage(ctk.CTkFrame):
         table_card.grid_columnconfigure(0, weight=1)
         table_card.grid_rowconfigure(1, weight=1)
 
-        # Header bar with Road filter
         hdr = ctk.CTkFrame(table_card, fg_color="transparent")
         hdr.grid(row=0, column=0, sticky="ew", padx=16, pady=(14, 4))
         hdr.grid_columnconfigure(0, weight=1)
@@ -201,7 +182,6 @@ class EmergencyVehiclesPage(ctk.CTkFrame):
         )
         self.filter_menu.pack(side="left")
 
-        # Scrollable inner frame
         self.table_frame = ctk.CTkScrollableFrame(
             table_card,
             fg_color="transparent",
@@ -274,14 +254,10 @@ class EmergencyVehiclesPage(ctk.CTkFrame):
 
         self.row_widgets.extend([w1, w2, w3, w4, w5])
 
-    # ── Action buttons ─────────────────────────────────────────────────────────
-
     def _build_action_row(self):
-        """Process and refresh buttons below the table."""
         self.action_frame = ctk.CTkFrame(self, fg_color="transparent")
         self.action_frame.grid(row=2, column=0, sticky="ew", padx=16, pady=(4, 16))
 
-        # Process Highest Priority Vehicle From Selected Road
         ctk.CTkButton(
             self.action_frame,
             text="🚨  Process Emergency Vehicle From Selected Road",
@@ -306,8 +282,6 @@ class EmergencyVehiclesPage(ctk.CTkFrame):
             height=38,
             command=self.refresh_data
         ).pack(side="right")
-
-    # ── Backend operations ─────────────────────────────────────────────────────
 
     def update_road_list(self):
         if not self.app.backend or not self.app.backend.connected:

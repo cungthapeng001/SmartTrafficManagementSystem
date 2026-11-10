@@ -5,7 +5,7 @@ using namespace std;
 using json = nlohmann::json;
 
 BackendProtocol::BackendProtocol() {
-    // Initialize seven default junctions (A through G) with bidirectional connections
+
     graph.initSevenJunctionNetwork();
 }
 
@@ -25,12 +25,12 @@ void BackendProtocol::run() {
     string line;
     while (getline(cin, line)) {
         if (line.empty()) continue;
-        
+
         json res;
         try {
             json req = json::parse(line);
             string op = req.value("operation", "");
-            
+
             if (op == "shutdown") {
                 res["success"] = true;
                 res["message"] = "Shutting down";
@@ -83,7 +83,7 @@ void BackendProtocol::run() {
             res["message"] = "Internal error: " + string(e.what());
             res["data"] = nullptr;
         }
-        
+
         cout << res.dump() << "\n";
         cout.flush();
     }
@@ -94,7 +94,7 @@ void BackendProtocol::handleAddNormalVehicle(const json& req, json& res) {
     string vehicleId = req.value("vehicle_id", "");
     string type = req.value("vehicle_type", "");
     int waitTime = req.value("waiting_time", -1);
-    
+
     string errorMsg;
     if (tm.addNormalVehicle(roadId, vehicleId, type, waitTime, errorMsg)) {
         res["success"] = true;
@@ -113,7 +113,7 @@ void BackendProtocol::handleAddEmergencyVehicle(const json& req, json& res) {
     string type = req.value("vehicle_type", "");
     int waitTime = req.value("waiting_time", -1);
     int priority = req.value("priority", -1);
-    
+
     string errorMsg;
     if (tm.addEmergencyVehicle(roadId, vehicleId, type, waitTime, priority, errorMsg)) {
         res["success"] = true;
@@ -130,7 +130,7 @@ void BackendProtocol::handleProcessNormalVehicle(const json& req, json& res) {
     string roadId = req.value("road_id", "");
     Vehicle processedVehicle;
     string errorMsg;
-    
+
     if (tm.processNormalVehicle(roadId, processedVehicle, errorMsg)) {
         res["success"] = true;
         res["message"] = "Normal vehicle processed successfully";
@@ -146,7 +146,7 @@ void BackendProtocol::handleProcessEmergencyVehicle(const json& req, json& res) 
     string roadId = req.value("road_id", "");
     Vehicle processedVehicle;
     string errorMsg;
-    
+
     if (tm.processEmergencyVehicle(roadId, processedVehicle, errorMsg)) {
         res["success"] = true;
         res["message"] = "Emergency vehicle processed successfully";
@@ -167,14 +167,14 @@ void BackendProtocol::handleGetNormalVehicles(const json& req, json& res) {
         res["data"] = nullptr;
         return;
     }
-    
+
     json list = json::array();
     queue<Vehicle> tempQueue = road->normalQueue;
     while (!tempQueue.empty()) {
         list.push_back(vehicleToJson(tempQueue.front()));
         tempQueue.pop();
     }
-    
+
     res["success"] = true;
     res["message"] = "Normal queue retrieved successfully";
     res["data"] = {{"vehicles", list}, {"count", list.size()}, {"road_id", road->roadId}, {"display_name", road->direction}};
@@ -189,14 +189,14 @@ void BackendProtocol::handleGetEmergencyVehicles(const json& req, json& res) {
         res["data"] = nullptr;
         return;
     }
-    
+
     json list = json::array();
     priority_queue<Vehicle> tempQueue = road->emergencyQueue;
     while (!tempQueue.empty()) {
         list.push_back(vehicleToJson(tempQueue.top()));
         tempQueue.pop();
     }
-    
+
     res["success"] = true;
     res["message"] = "Emergency queue retrieved successfully";
     res["data"] = {{"vehicles", list}, {"count", list.size()}, {"road_id", road->roadId}, {"display_name", road->direction}};
@@ -211,7 +211,7 @@ void BackendProtocol::handleGetTrafficInfo(const json& req, json& res) {
         res["data"] = nullptr;
         return;
     }
-    
+
     res["success"] = true;
     res["message"] = "Traffic info retrieved successfully";
     res["data"] = {
@@ -228,7 +228,7 @@ void BackendProtocol::handleUpdateSensorInfo(const json& req, json& res) {
     string roadId = req.value("road_id", "");
     int count = req.value("sensor_count", -1);
     int waitTime = req.value("max_wait_time", -1);
-    
+
     string errorMsg;
     if (tm.updateSensorInfo(roadId, count, waitTime, errorMsg)) {
         res["success"] = true;
@@ -241,7 +241,7 @@ void BackendProtocol::handleUpdateSensorInfo(const json& req, json& res) {
     }
 }
 
-void BackendProtocol::handleGetRoads(const json& /*req*/, json& res) {
+void BackendProtocol::handleGetRoads(const json& , json& res) {
     const auto& roads = tm.getAllRoads();
     json list = json::array();
     for (const auto& r : roads) {
@@ -264,7 +264,7 @@ void BackendProtocol::handleAddRoad(const json& req, json& res) {
     string displayName = req.value("display_name", "");
     int count = req.value("sensor_count", 0);
     int wait = req.value("max_wait_time", 0);
-    
+
     string errorMsg;
     if (tm.addRoad(roadId, displayName, count, wait, errorMsg)) {
         res["success"] = true;
@@ -280,10 +280,7 @@ void BackendProtocol::handleAddRoad(const json& req, json& res) {
     }
 }
 
-// ---------------------------------------------------------
-// Graph & Dijkstra Handlers
-// ---------------------------------------------------------
-void BackendProtocol::handleGetJunctions(const json& /*req*/, json& res) {
+void BackendProtocol::handleGetJunctions(const json& , json& res) {
     vector<string> names = graph.getJunctionNames();
     json list = json::array();
     for (const auto& name : names) {
@@ -299,7 +296,7 @@ void BackendProtocol::handleGetJunctions(const json& /*req*/, json& res) {
     };
 }
 
-void BackendProtocol::handleGetGraphConnections(const json& /*req*/, json& res) {
+void BackendProtocol::handleGetGraphConnections(const json& , json& res) {
     auto conns = graph.getRoadConnections();
     json list = json::array();
     for (const auto& c : conns) {
@@ -391,7 +388,7 @@ void BackendProtocol::handleConnectRoad(const json& req, json& res) {
     res["data"] = {{"from", from}, {"to", to}, {"weight", weight}};
 }
 
-void BackendProtocol::handlePing(const json& /*req*/, json& res) {
+void BackendProtocol::handlePing(const json& , json& res) {
     res["success"] = true;
     res["message"] = "pong";
     res["data"] = nullptr;

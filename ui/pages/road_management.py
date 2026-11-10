@@ -1,7 +1,6 @@
 import customtkinter as ctk
 from theme import COLORS, get_traffic_level
 
-# In-memory dictionary for simulated junction connections (prepared for Graph integration)
 ROAD_JUNCTIONS = {
     "NORTH": "Junction A ↔ Junction B",
     "SOUTH": "Junction C ↔ Junction D",
@@ -10,16 +9,7 @@ ROAD_JUNCTIONS = {
     "CENTRAL": "Junction A ↔ Junction D",
 }
 
-
 class RoadManagementPage(ctk.CTkFrame):
-    """
-    Road Management Page
-    Allows administrators to:
-    1. View all managed roads in the multi-road network with their sensor data,
-       queue sizes, traffic levels, and junction linkages.
-    2. Add new roads dynamically to the C++ backend.
-    3. Prepare road network segments for Graph topology and Dijkstra shortest path routing.
-    """
 
     def __init__(self, master, app):
         super().__init__(master, fg_color="transparent")
@@ -29,13 +19,10 @@ class RoadManagementPage(ctk.CTkFrame):
         self.grid_columnconfigure((0, 1), weight=1)
         self.grid_rowconfigure(1, weight=1)
 
-        # ── Top info banner ────────────────────────────────────────────────
         self._build_banner()
 
-        # ── Left: Add Road form ────────────────────────────────────────────
         self._build_add_road_panel()
 
-        # ── Right: All Roads list / overview ───────────────────────────────
         self._build_roads_list_panel()
 
     def _build_banner(self):
@@ -49,8 +36,6 @@ class RoadManagementPage(ctk.CTkFrame):
             font=ctk.CTkFont(size=12),
             text_color=COLORS["accent"]
         ).pack(padx=16, pady=10)
-
-    # ── Add Road Panel ─────────────────────────────────────────────────────────
 
     def _build_add_road_panel(self):
         card = ctk.CTkFrame(
@@ -75,7 +60,6 @@ class RoadManagementPage(ctk.CTkFrame):
             row=2, column=0, padx=16, pady=(0, 14), sticky="ew"
         )
 
-        # Form variables
         self.road_id_var = ctk.StringVar(value="")
         self.road_name_var = ctk.StringVar(value="")
         self.junction_var = ctk.StringVar(value="Junction A ↔ Junction B")
@@ -101,7 +85,6 @@ class RoadManagementPage(ctk.CTkFrame):
         make_field(9, "Simulated Vehicle Count:", self.sensor_count_var, "e.g. 10")
         make_field(11, "Simulated Max Wait Time (s):", self.max_wait_var, "e.g. 30")
 
-        # Submit button
         ctk.CTkButton(
             card, text="➕  Register Road in Backend",
             fg_color=COLORS["green"], hover_color="#237a35",
@@ -109,8 +92,6 @@ class RoadManagementPage(ctk.CTkFrame):
             height=40, corner_radius=8,
             command=self.add_road
         ).grid(row=13, column=0, padx=16, pady=(8, 16), sticky="ew")
-
-    # ── All Roads Overview Panel ───────────────────────────────────────────────
 
     def _build_roads_list_panel(self):
         card = ctk.CTkFrame(
@@ -121,7 +102,6 @@ class RoadManagementPage(ctk.CTkFrame):
         card.grid_columnconfigure(0, weight=1)
         card.grid_rowconfigure(2, weight=1)
 
-        # Header
         hdr = ctk.CTkFrame(card, fg_color="transparent")
         hdr.grid(row=0, column=0, padx=16, pady=(16, 4), sticky="ew")
         hdr.grid_columnconfigure(0, weight=1)
@@ -143,7 +123,6 @@ class RoadManagementPage(ctk.CTkFrame):
             row=1, column=0, padx=16, pady=(6, 8), sticky="ew"
         )
 
-        # Scrollable list of roads
         self.roads_scroll = ctk.CTkScrollableFrame(
             card, fg_color="transparent",
             scrollbar_button_color=COLORS["border"],
@@ -152,7 +131,6 @@ class RoadManagementPage(ctk.CTkFrame):
         self.roads_scroll.grid(row=2, column=0, padx=8, pady=(0, 8), sticky="nsew")
         self.roads_scroll.grid_columnconfigure(0, weight=1)
 
-        # Refresh button
         ctk.CTkButton(
             card, text="🔄  Refresh Road List",
             fg_color=COLORS["bg_dark"], hover_color=COLORS["border"],
@@ -180,12 +158,10 @@ class RoadManagementPage(ctk.CTkFrame):
         item.grid(row=idx, column=0, sticky="ew", padx=6, pady=4)
         item.grid_columnconfigure(1, weight=1)
 
-        # Left color bar
         ctk.CTkFrame(item, width=4, fg_color=color, corner_radius=4).grid(
             row=0, column=0, rowspan=3, padx=(6, 8), pady=8, sticky="ns"
         )
 
-        # Title + ID
         title_box = ctk.CTkFrame(item, fg_color="transparent")
         title_box.grid(row=0, column=1, sticky="ew", padx=(0, 10), pady=(8, 2))
         title_box.grid_columnconfigure(0, weight=1)
@@ -196,7 +172,6 @@ class RoadManagementPage(ctk.CTkFrame):
             text_color=COLORS["text_main"]
         ).grid(row=0, column=0, sticky="w")
 
-        # Traffic Level badge
         ctk.CTkLabel(
             title_box, text=level,
             font=ctk.CTkFont(size=10, weight="bold"),
@@ -204,22 +179,18 @@ class RoadManagementPage(ctk.CTkFrame):
             corner_radius=4, width=55, height=20
         ).grid(row=0, column=1, sticky="e")
 
-        # Junction link
         ctk.CTkLabel(
             item, text=f"🔗 Junctions: {junction_link}",
             font=ctk.CTkFont(size=11), text_color=COLORS["accent"],
             anchor="w"
         ).grid(row=1, column=1, sticky="w", padx=(0, 10), pady=(0, 2))
 
-        # Stats summary line
         stats = f"Sensors: {count} vehicles | Wait: {wait}s | Normal Queue: {nq} | Emergency: {eq}"
         ctk.CTkLabel(
             item, text=stats,
             font=ctk.CTkFont(size=11), text_color=COLORS["text_muted"],
             anchor="w"
         ).grid(row=2, column=1, sticky="w", padx=(0, 10), pady=(0, 8))
-
-    # ── Actions ────────────────────────────────────────────────────────────────
 
     def add_road(self):
         if not self.app.backend or not self.app.backend.connected:
@@ -283,4 +254,3 @@ class RoadManagementPage(ctk.CTkFrame):
                 self._render_road_item(idx, road)
 
             self.app.log_activity(f"Road management refreshed ({len(self.roads_data)} roads)", True)
-

@@ -1,6 +1,5 @@
 import customtkinter as ctk
 
-# ── Color palette ──────────────────────────────────────────────────────────────
 BG_DARK    = "#0D1117"
 BG_CARD    = "#161B22"
 ACCENT     = "#1F6FEB"
@@ -10,35 +9,22 @@ GREEN      = "#2EA043"
 RED        = "#DA3633"
 BORDER     = "#30363D"
 
-
 class ActivityLogPage(ctk.CTkFrame):
-    """
-    Activity Log page — displays a scrollable list of all system actions
-    logged during the session. Each entry shows timestamp, status badge,
-    and message text. Entries with ERROR status have a red left-border accent,
-    SUCCESS entries have green.
-    """
 
     def __init__(self, master, app):
         super().__init__(master, fg_color="transparent")
         self.app = app
 
         self.grid_columnconfigure(0, weight=1)
-        self.grid_rowconfigure(1, weight=1)   # Log area stretches
+        self.grid_rowconfigure(1, weight=1)
 
-        # ── Top bar: title + count ─────────────────────────────────────────
         self._build_top_bar()
 
-        # ── Scrollable log area ────────────────────────────────────────────
         self._build_log_area()
 
-        # ── Bottom action bar ──────────────────────────────────────────────
         self._build_action_bar()
 
-    # ── Top bar ────────────────────────────────────────────────────────────────
-
     def _build_top_bar(self):
-        """Header row showing the page title and a live log-count label."""
         top_bar = ctk.CTkFrame(self, fg_color="transparent")
         top_bar.grid(row=0, column=0, sticky="ew", padx=16, pady=(16, 8))
         top_bar.grid_columnconfigure(0, weight=1)
@@ -50,7 +36,6 @@ class ActivityLogPage(ctk.CTkFrame):
             text_color=TEXT_MAIN
         ).grid(row=0, column=0, sticky="w")
 
-        # Count label — updated whenever logs refresh
         self.count_lbl = ctk.CTkLabel(
             top_bar,
             text="0 entries",
@@ -59,10 +44,7 @@ class ActivityLogPage(ctk.CTkFrame):
         )
         self.count_lbl.grid(row=0, column=1, sticky="e")
 
-    # ── Scrollable log area ────────────────────────────────────────────────────
-
     def _build_log_area(self):
-        """Outer card wrapping a scrollable frame for log entries."""
         log_card = ctk.CTkFrame(
             self, fg_color=BG_CARD, corner_radius=12,
             border_width=1, border_color=BORDER
@@ -80,13 +62,9 @@ class ActivityLogPage(ctk.CTkFrame):
         self.log_frame.grid(row=0, column=0, sticky="nsew", padx=4, pady=4)
         self.log_frame.grid_columnconfigure(0, weight=1)
 
-        # Tracks the per-entry container frames so we can remove them
         self.log_widgets = []
 
-    # ── Bottom action bar ──────────────────────────────────────────────────────
-
     def _build_action_bar(self):
-        """Bottom row with info text and a Clear Log button."""
         self.action_frame = ctk.CTkFrame(self, fg_color="transparent")
         self.action_frame.grid(row=2, column=0, sticky="ew",
                                padx=16, pady=(0, 16))
@@ -112,27 +90,17 @@ class ActivityLogPage(ctk.CTkFrame):
             command=self.clear_logs
         ).pack(side="right")
 
-    # ── Helpers ────────────────────────────────────────────────────────────────
-
     def clear_logs(self):
-        """Clear the in-memory log store and refresh the display."""
         self.app.activity_logs.clear()
         self.refresh_data()
 
     def refresh_data(self):
-        """
-        Re-render all log entries from app.activity_logs.
-        Each entry is a mini-card with a colored left-border accent strip
-        (green = SUCCESS, red = ERROR), a timestamp, status badge, and message.
-        """
-        # Remove all existing log entry widgets
         for w in self.log_widgets:
             w.destroy()
         self.log_widgets.clear()
 
         entries = self.app.activity_logs
 
-        # Update the count label
         self.count_lbl.configure(text=f"{len(entries)} {'entry' if len(entries) == 1 else 'entries'}")
 
         for idx, log in enumerate(entries):
@@ -140,7 +108,6 @@ class ActivityLogPage(ctk.CTkFrame):
             border_color = GREEN if is_success else RED
             status_text  = log["status"]
 
-            # Outer container: mini-card row
             entry_frame = ctk.CTkFrame(
                 self.log_frame,
                 fg_color=BG_DARK,
@@ -152,7 +119,6 @@ class ActivityLogPage(ctk.CTkFrame):
                              padx=8, pady=3)
             entry_frame.grid_columnconfigure(2, weight=1)
 
-            # Colored left-border accent strip
             accent_strip = ctk.CTkFrame(
                 entry_frame,
                 width=4,
@@ -161,7 +127,6 @@ class ActivityLogPage(ctk.CTkFrame):
             )
             accent_strip.grid(row=0, column=0, padx=(6, 0), pady=6, sticky="ns")
 
-            # Status badge
             status_badge = ctk.CTkLabel(
                 entry_frame,
                 text=status_text,
@@ -174,7 +139,6 @@ class ActivityLogPage(ctk.CTkFrame):
             )
             status_badge.grid(row=0, column=1, padx=(8, 6), pady=8)
 
-            # Timestamp + message combined label
             msg_text = f"[{log['time']}]  {log['message']}"
             msg_lbl = ctk.CTkLabel(
                 entry_frame,
@@ -187,5 +151,4 @@ class ActivityLogPage(ctk.CTkFrame):
             )
             msg_lbl.grid(row=0, column=2, padx=(0, 12), pady=8, sticky="w")
 
-            # Track all three sub-widgets via the outer frame
             self.log_widgets.append(entry_frame)

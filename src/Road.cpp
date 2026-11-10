@@ -44,7 +44,7 @@ void Road::displayNormalQueue() const {
         cout << "Queue is empty.\n";
         return;
     }
-    
+
     queue<Vehicle> tempQueue = normalQueue;
     cout << "Total waiting: " << tempQueue.size() << "\n";
     int pos = 1;
@@ -62,7 +62,7 @@ void Road::displayEmergencyQueue() const {
         cout << "Queue is empty.\n";
         return;
     }
-    
+
     priority_queue<Vehicle> tempQueue = emergencyQueue;
     cout << "Total waiting: " << tempQueue.size() << "\n";
     int pos = 1;
@@ -74,7 +74,7 @@ void Road::displayEmergencyQueue() const {
         else if (v.emergencyPriority == 3) prioStr = "Police (P3)";
         else prioStr = "Other";
 
-        cout << pos << ". ID: " << v.id << ", Type: " << v.type << " (" << prioStr 
+        cout << pos << ". ID: " << v.id << ", Type: " << v.type << " (" << prioStr
              << "), Wait Time: " << v.waitTime << "s\n";
         tempQueue.pop();
         pos++;

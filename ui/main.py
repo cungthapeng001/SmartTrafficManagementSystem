@@ -3,10 +3,8 @@ import os
 import sys
 import logging
 
-# Import backend communication client
 from backend_client import BackendClient
 
-# Import all page modules
 from pages.dashboard import DashboardPage
 from pages.normal_vehicles import NormalVehiclesPage
 from pages.emergency_vehicles import EmergencyVehiclesPage
@@ -20,7 +18,6 @@ from pages.settings import SettingsPage
 
 from theme import COLORS
 
-# ── Color palette aliases from theme ───────────────────────────────────────────
 BG_DARK    = COLORS["bg_dark"]
 BG_CARD    = COLORS["bg_card"]
 BG_SIDEBAR = COLORS["bg_dark"]
@@ -32,12 +29,7 @@ YELLOW     = COLORS["yellow"]
 RED        = COLORS["red"]
 BORDER     = COLORS["border"]
 
-
 class App(ctk.CTk):
-    """
-    Main application window for the Smart Traffic Management System.
-    Hosts the sidebar navigation, top header bar, and swappable content pages.
-    """
 
     def __init__(self):
         super().__init__()
@@ -46,42 +38,29 @@ class App(ctk.CTk):
         self.geometry("1280x820")
         self.minsize(1100, 680)
 
-        # Apply dark theme globally
         ctk.set_appearance_mode("dark")
         ctk.set_default_color_theme("blue")
 
-        # Configure root window grid
         self.configure(fg_color=BG_DARK)
-        self.grid_columnconfigure(1, weight=1)   # Content stretches horizontally
-        self.grid_rowconfigure(1, weight=1)       # Content stretches vertically
+        self.grid_columnconfigure(1, weight=1)
+        self.grid_rowconfigure(1, weight=1)
 
-        # ── Application state ───────────────────────────────────────────────
         self.backend = None
-        self.activity_logs = []   # In-memory list of activity log entries
-        self.pages = {}           # Holds instantiated page objects keyed by name
-        self.current_page = None  # Reference to the page currently displayed
-        self.nav_buttons = {}     # Navigation button references
+        self.activity_logs = []
+        self.pages = {}
+        self.current_page = None
+        self.nav_buttons = {}
 
-        # Start the C++ backend process
         self.init_backend()
 
-        # ── Build UI sections ───────────────────────────────────────────────
         self._build_sidebar()
         self._build_header()
         self._build_content_area()
 
-        # Instantiate all page objects and show dashboard first
         self.setup_pages()
         self.show_page("dashboard")
 
-    # ── Sidebar ────────────────────────────────────────────────────────────────
-
     def _build_sidebar(self):
-        """
-        Build the left-side navigation sidebar.
-        Top section holds primary navigation items.
-        Bottom section holds Activity Log and Settings, pinned to the bottom.
-        """
         self.sidebar_frame = ctk.CTkFrame(
             self,
             width=230,
@@ -91,17 +70,9 @@ class App(ctk.CTk):
         self.sidebar_frame.grid(row=0, column=0, rowspan=2, sticky="nsew")
         self.sidebar_frame.grid_propagate(False)
 
-        # Configure grid rows:
-        # Row 0: Logo
-        # Row 1: Divider
-        # Row 2: Main nav container
-        # Row 3: Expanding spacer (pushes bottom nav down)
-        # Row 4: Divider
-        # Row 5: Bottom nav container (Activity Log, Settings)
         self.sidebar_frame.grid_columnconfigure(0, weight=1)
         self.sidebar_frame.grid_rowconfigure(3, weight=1)
 
-        # ── Logo / branding ──
         logo_label = ctk.CTkLabel(
             self.sidebar_frame,
             text="🚦 Smart Traffic\nManagement System",
@@ -111,16 +82,13 @@ class App(ctk.CTk):
         )
         logo_label.grid(row=0, column=0, padx=16, pady=(24, 16), sticky="ew")
 
-        # Divider below logo
         divider = ctk.CTkFrame(self.sidebar_frame, height=1, fg_color=BORDER)
         divider.grid(row=1, column=0, padx=16, pady=(0, 10), sticky="ew")
 
-        # ── Top Navigation Frame ──
         top_nav_frame = ctk.CTkFrame(self.sidebar_frame, fg_color="transparent")
         top_nav_frame.grid(row=2, column=0, sticky="new", padx=10)
         top_nav_frame.grid_columnconfigure(0, weight=1)
 
-        # Main navigation items (in exact requested order)
         main_nav_items = [
             ("Dashboard",           "dashboard"),
             ("Normal Vehicles",     "normal_vehicles"),
@@ -148,13 +116,9 @@ class App(ctk.CTk):
             btn.grid(row=i, column=0, pady=2, sticky="ew")
             self.nav_buttons[page_name] = btn
 
-        # ── Row 3 is empty expanding space ──
-
-        # ── Bottom Divider ──
         bottom_divider = ctk.CTkFrame(self.sidebar_frame, height=1, fg_color=BORDER)
         bottom_divider.grid(row=4, column=0, padx=16, pady=(6, 8), sticky="ew")
 
-        # ── Bottom Navigation Frame (Pinned to bottom) ──
         bottom_nav_frame = ctk.CTkFrame(self.sidebar_frame, fg_color="transparent")
         bottom_nav_frame.grid(row=5, column=0, sticky="sew", padx=10, pady=(0, 16))
         bottom_nav_frame.grid_columnconfigure(0, weight=1)
@@ -180,10 +144,7 @@ class App(ctk.CTk):
             btn.grid(row=i, column=0, pady=2, sticky="ew")
             self.nav_buttons[page_name] = btn
 
-    # ── Header bar ─────────────────────────────────────────────────────────────
-
     def _build_header(self):
-        """Build the top header bar showing page title and connection status."""
         self.header_frame = ctk.CTkFrame(
             self,
             corner_radius=0,
@@ -194,7 +155,6 @@ class App(ctk.CTk):
         self.header_frame.grid_columnconfigure(0, weight=1)
         self.header_frame.grid_propagate(False)
 
-        # Page title
         self.header_title = ctk.CTkLabel(
             self.header_frame,
             text="Dashboard",
@@ -203,7 +163,6 @@ class App(ctk.CTk):
         )
         self.header_title.grid(row=0, column=0, sticky="w", padx=24, pady=(16, 0))
 
-        # Page description subtitle
         self.header_desc = ctk.CTkLabel(
             self.header_frame,
             text="Multi-Road Traffic Overview",
@@ -212,7 +171,6 @@ class App(ctk.CTk):
         )
         self.header_desc.grid(row=1, column=0, sticky="w", padx=24, pady=(0, 10))
 
-        # Connection status pill (right side)
         self.conn_status_var = ctk.StringVar(value="● Connecting...")
         self.conn_status_label = ctk.CTkLabel(
             self.header_frame,
@@ -224,10 +182,7 @@ class App(ctk.CTk):
 
         self.update_connection_status()
 
-    # ── Content area ───────────────────────────────────────────────────────────
-
     def _build_content_area(self):
-        """Build the main content frame where pages are swapped in and out."""
         self.content_frame = ctk.CTkFrame(
             self,
             corner_radius=12,
@@ -237,10 +192,7 @@ class App(ctk.CTk):
         self.content_frame.grid_columnconfigure(0, weight=1)
         self.content_frame.grid_rowconfigure(0, weight=1)
 
-    # ── Backend initialization ─────────────────────────────────────────────────
-
     def init_backend(self):
-        """Locate the C++ backend executable and start it as a subprocess."""
         if sys.platform == "win32":
             exe_path = os.path.abspath(
                 os.path.join(os.path.dirname(__file__), "..", "SmartTrafficManagementSystem.exe")
@@ -258,10 +210,7 @@ class App(ctk.CTk):
             self.log_activity(f"Backend connection failed: {str(e)}", False)
             self.update_connection_status()
 
-    # ── Logging ────────────────────────────────────────────────────────────────
-
     def log_activity(self, message, success):
-        """Prepend a log entry to the in-memory activity list and refresh the Activity Log page."""
         import datetime
         now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         status = "SUCCESS" if success else "ERROR"
@@ -270,10 +219,7 @@ class App(ctk.CTk):
         if "activity_log" in self.pages:
             self.pages["activity_log"].refresh_data()
 
-    # ── Connection status ──────────────────────────────────────────────────────
-
     def update_connection_status(self):
-        """Update header connection pill to reflect current backend state."""
         if self.backend and self.backend.connected:
             self.conn_status_var.set("● Connected")
             self.conn_status_label.configure(text_color=GREEN)
@@ -281,10 +227,7 @@ class App(ctk.CTk):
             self.conn_status_var.set("● Disconnected")
             self.conn_status_label.configure(text_color=RED)
 
-    # ── Page setup ─────────────────────────────────────────────────────────────
-
     def setup_pages(self):
-        """Instantiate all pages and store them in self.pages dict."""
         self.pages["dashboard"]          = DashboardPage(self.content_frame, self)
         self.pages["normal_vehicles"]    = NormalVehiclesPage(self.content_frame, self)
         self.pages["emergency_vehicles"] = EmergencyVehiclesPage(self.content_frame, self)
@@ -296,13 +239,7 @@ class App(ctk.CTk):
         self.pages["activity_log"]       = ActivityLogPage(self.content_frame, self)
         self.pages["settings"]           = SettingsPage(self.content_frame, self)
 
-    # ── Page navigation ────────────────────────────────────────────────────────
-
     def show_page(self, page_name):
-        """
-        Switch the content area to the named page.
-        Updates nav button highlight and header text accordingly.
-        """
         for name, btn in self.nav_buttons.items():
             if name == page_name:
                 btn.configure(fg_color=ACCENT, text_color=TEXT_MAIN)
@@ -338,16 +275,11 @@ class App(ctk.CTk):
         self.current_page.refresh_data()
         self.update_connection_status()
 
-    # ── Window close ──────────────────────────────────────────────────────────
-
     def on_closing(self):
-        """Gracefully shut down the backend subprocess before closing the window."""
         if self.backend:
             self.backend.stop()
         self.destroy()
 
-
-# ── Entry point ────────────────────────────────────────────────────────────────
 if __name__ == "__main__":
     app = App()
     app.protocol("WM_DELETE_WINDOW", app.on_closing)

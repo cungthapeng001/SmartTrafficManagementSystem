@@ -11,7 +11,6 @@ YELLOW     = COLORS["yellow"]
 RED        = COLORS["red"]
 BORDER     = COLORS["border"]
 
-
 def traffic_badge_color(sensor_count):
     if sensor_count <= 5:
         return "LOW", GREEN
@@ -20,33 +19,22 @@ def traffic_badge_color(sensor_count):
     else:
         return "HIGH", RED
 
-
 class RoadSensorsPage(ctk.CTkFrame):
-    """
-    Road Sensors page.
-    Left card: form to update simulated sensor data for any selected road.
-    Right card: scrollable view of current sensor readings for all roads.
-    """
 
     def __init__(self, master, app):
         super().__init__(master, fg_color="transparent")
         self.app = app
         self.available_roads = ["NORTH", "SOUTH", "EAST", "WEST", "CENTRAL"]
-        self.mini_cards = {}  # road_id -> dict of label widgets
+        self.mini_cards = {}
 
         self.grid_columnconfigure((0, 1), weight=1)
         self.grid_rowconfigure(0, weight=1)
 
-        # ── Left: Update form ───────────────────────────────────────────────
         self._build_form_card()
 
-        # ── Right: Current status display ───────────────────────────────────
         self._build_status_card()
 
-    # ── Update form card ───────────────────────────────────────────────────────
-
     def _build_form_card(self):
-        """Left-side card with inputs for updating sensor simulation data."""
         self.form_frame = ctk.CTkFrame(
             self, fg_color=BG_CARD, corner_radius=12,
             border_width=1, border_color=BORDER
@@ -54,7 +42,6 @@ class RoadSensorsPage(ctk.CTkFrame):
         self.form_frame.grid(row=0, column=0, padx=(16, 8), pady=16, sticky="nsew")
         self.form_frame.grid_columnconfigure(0, weight=1)
 
-        # Card title
         ctk.CTkLabel(
             self.form_frame,
             text="Update Simulated Sensors",
@@ -75,7 +62,6 @@ class RoadSensorsPage(ctk.CTkFrame):
             row=2, column=0, padx=16, pady=(0, 16), sticky="ew"
         )
 
-        # Road selection
         self.road_var = ctk.StringVar(value="NORTH")
         self._form_label(self.form_frame, "Road Selection:", 3)
         self.road_menu = ctk.CTkOptionMenu(
@@ -90,7 +76,6 @@ class RoadSensorsPage(ctk.CTkFrame):
         )
         self.road_menu.grid(row=4, column=0, padx=16, pady=(0, 14), sticky="ew")
 
-        # Vehicle count
         self.count_var = ctk.StringVar(value="10")
         self._form_label(self.form_frame, "Simulated Vehicle Count:", 5)
         ctk.CTkEntry(
@@ -103,7 +88,6 @@ class RoadSensorsPage(ctk.CTkFrame):
             corner_radius=8
         ).grid(row=6, column=0, padx=16, pady=(0, 14), sticky="ew")
 
-        # Max wait time
         self.wait_var = ctk.StringVar(value="30")
         self._form_label(self.form_frame, "Simulated Max Wait Time (s):", 7)
         ctk.CTkEntry(
@@ -116,7 +100,6 @@ class RoadSensorsPage(ctk.CTkFrame):
             corner_radius=8
         ).grid(row=8, column=0, padx=16, pady=(0, 20), sticky="ew")
 
-        # Submit button
         ctk.CTkButton(
             self.form_frame,
             text="Update Sensors for Selected Road",
@@ -137,10 +120,7 @@ class RoadSensorsPage(ctk.CTkFrame):
             anchor="w"
         ).grid(row=row, column=0, padx=16, pady=(0, 4), sticky="w")
 
-    # ── Status display card ────────────────────────────────────────────────────
-
     def _build_status_card(self):
-        """Right-side card showing scrollable sensor readings for all roads."""
         self.status_frame = ctk.CTkFrame(
             self, fg_color=BG_CARD, corner_radius=12,
             border_width=1, border_color=BORDER
@@ -149,7 +129,6 @@ class RoadSensorsPage(ctk.CTkFrame):
         self.status_frame.grid_columnconfigure(0, weight=1)
         self.status_frame.grid_rowconfigure(3, weight=1)
 
-        # Card title
         ctk.CTkLabel(
             self.status_frame,
             text="Current Sensor Status",
@@ -168,7 +147,6 @@ class RoadSensorsPage(ctk.CTkFrame):
             row=2, column=0, padx=16, pady=(0, 8), sticky="ew"
         )
 
-        # Scrollable container for road mini-cards
         self.sensor_scroll = ctk.CTkScrollableFrame(
             self.status_frame,
             fg_color="transparent",
@@ -178,7 +156,6 @@ class RoadSensorsPage(ctk.CTkFrame):
         self.sensor_scroll.grid(row=3, column=0, padx=8, pady=(0, 8), sticky="nsew")
         self.sensor_scroll.grid_columnconfigure(0, weight=1)
 
-        # Refresh button
         ctk.CTkButton(
             self.status_frame,
             text="🔄  Refresh All Sensors",
@@ -236,8 +213,6 @@ class RoadSensorsPage(ctk.CTkFrame):
 
         ctk.CTkFrame(card, height=6, fg_color="transparent").grid(row=4, column=0)
         return card
-
-    # ── Backend operations ─────────────────────────────────────────────────────
 
     def update_road_list(self):
         if not self.app.backend or not self.app.backend.connected:

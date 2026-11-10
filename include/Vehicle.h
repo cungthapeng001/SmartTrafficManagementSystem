@@ -6,10 +6,10 @@ struct Vehicle {
     std::string type;
     int waitTime;
     bool isEmergency;
-    
-    int emergencyPriority; 
-    
-    int insertionOrder; 
+
+    int emergencyPriority;
+
+    int insertionOrder;
 
     Vehicle();
 
